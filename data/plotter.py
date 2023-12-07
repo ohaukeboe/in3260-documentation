@@ -741,7 +741,7 @@ if __name__ == "__main__":
         """Perform an operation on the data."""
         # Shift the data so that the minimum value is 0
         for test in data.tests():
-            for addr in addresses.keys():
+            for addr in addresses:
                 y_values: List[float] = data.y_values(test, addr)
                 min_y = min(y_values)
                 y_values = [y - min_y for y in y_values]

@@ -92,6 +92,50 @@ In order to configure the bottlenecks, we change the throughput at Router 1 and 
 | Router 2       |              70 |              15 |
 | WiFi AP        |              70 |              70 |
 
+While the throughput is the main way in which we decide where the bottleneck is, we also change some other variables. These are the queue length at Router 1 and the delay at Router 1. The queue lengths used are:
+- 0.5 BDP
+- 1 BDP
+- 1.5 BDP
+- 2 BDP
+
+The tests were also run with both a delay of 50ms and 10ms at Router 1. Additionally, Router 2 always had a delay of 10ms.
+
+In order to set these limitations, we used the built-in functions of TEACUP which allows us to set these limitations for the router, and then it runs the tests for each of the values specified. This is done by setting the following variables in the TEACUP configuration:
+#+begin_src python
+  # Emulated delays in ms
+  TPCONF_delays = [25,]
+
+  # Emulated bandwidths (downstream, upstream)
+  TPCONF_bandwidths = [
+      ('70mbit', '70mbit'),
+  ]
+
+  # Buffer size
+  TPCONF_buffer_sizes = [31, 62, 93, 124]
+#+end_src
+This will run 4 different tests, as there are 4 different buffer sizes specified. Also, note that the delay here is set to 25ms. This is because TEACUP sets the delay for both downstream and upstream. Hence, the total delay for the rtt of the packets is 50.
+
+When running the tests TEACUP sets up a mix between these lists and runs the tests. But this is not what we wanted to do, which is why only the buffer sizes have multiple values specified. As we wanted to use a different set of buffer sizes for each delay configuration, it would cause us to run more tests than necessary.
+
+Additionally, TEACUP does not support setting different configurations for multiple routers. This meant that we had to limit the bandwidth for Router 2 in a different way. It was, therefore, easier to have multiple configuration files with different configurations, and then have a script running them.
+
+In order to set the delay for Router 2, we used the =tc= program to set qdisc rules. TEACUP has a variable =TPCONF_host_init_custom_cmds= which runs commands specified on a specified machine. we used the following configuration for automatically setting the correct limitations on Router 2.
+#+begin_src python
+  tc_delay = '10ms'
+  tc_rate = '70Mbit'
+  tc_bsize = '18750'
+
+  TPCONF_host_init_custom_cmds = {
+     'pc02' : ['tc qdisc del dev enp13s1 root',
+               'tc qdisc add dev enp13s1 root handle 2: netem delay %s' % tc_delay,
+               'tc qdisc add dev enp13s1 parent 2: handle 3: htb default 10',
+               'tc class add dev enp13s1 parent 3: classid 10 htb rate %s' % tc_rate,
+               'tc qdisc add dev enp13s1 parent 3:10 handle 11: bfifo limit %s' % tc_bsize],
+  }
+#+end_src
+
+# TODO: Maybe say something about the buffersizes
+
 ** Traffic
 
 #+begin_comment
@@ -99,7 +143,18 @@ In order to configure the bottlenecks, we change the throughput at Router 1 and 
 - Vary the number of flows at Server 1?
 #+end_comment
 
- We emulate VoIP traffic, for which we send 20 UDP packets per second with a packet size of 100 bytes (this mimics Skype, which will use TCP when UDP does not work and was found to send at roughly this rate and packet size with occasional outliers [cite:@mazharrathoreExploitingEncryptedTunneled2018]).
+In order for NETHINT to determine the rtt and owd for the network packets, it is necessary to use TCP. Between Server 2 and Client 2 we emulate VoIP traffic, for which we send 20 UDP packets per second with a packet size of 100 bytes (this mimics Skype, which will use TCP when UDP does not work and was found to send at roughly this rate and packet size with occasional outliers [cite:@mazharrathoreExploitingEncryptedTunneled2018]). This is done using iperf with the flags =-b 16k -l 100 -i 0.05= at the client. This sends packets of size 100B every 0.05 seconds, which adds up to 16Kb per second. These flags are described in [cite:@ManpageIPERF].
+
+We run the tests with a few different types of traffic between Server 1 and Client 1. The different types of traffic are:
+- 3 Reno
+- 3 BBR
+- 3 Cubic
+- 1 Cubic + 1 BBR + 1 Reno
+- 1 VoIP + 3 Reno
+- 1 VoIP + 3 Cubic
+- 1 VoIP + 3 BBR
+- 1 VoIP +  1 Cubic + 1 BBR + 1 Reno
+The VoIP traffic is set up the same way as between Server 2 and Client 2. The different TCP variants were also set up using iperf, but with the flag =-Z CCALGORITHM= where =CCALGORITHM= is one of reno, bbr, or cubic. We also initially had some tests for web traffic and VoIP traffic without the normal TCP traffic, but this did not produce enough traffic to cause any congestion.
 
 * Data                                                             :noexport:
 
@@ -110,3 +165,7 @@ In order to configure the bottlenecks, we change the throughput at Router 1 and 
 :UNNUMBERED: t
 :END:
 #+print_bibliography:
+
+# Local Variables:
+# jinx-local-words: "iperf owd qdisc rtt"
+# End:
