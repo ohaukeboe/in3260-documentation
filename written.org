@@ -1,0 +1,112 @@
+#+title: Something
+#+subtitle: IN3260
+#+author: Oskar Haukebøe
+:options:
+#+latex_class_options: [a4paper,11pt]
+#+language: en
+#+options: toc:nil
+#+startup: hideblocks
+#+bibliography: local-bib.bib
+#+cite_export: csl ~/Zotero/styles/ieee.csl
+#+latex_header: \usepackage{lipsum}
+#+latex_header: \usepackage{subcaption}
+#+latex_header: \usepackage{caption}
+#+latex_header: \hypersetup{hidelinks}
+#+latex_header: \usepackage[format=hang, width=.85\textwidth]{caption}
+#+latex_header: \usepackage[margin=1.3in]{geometry}
+:end:
+
+* COMMENT todo-list
+- [-] Testbed [1/3]
+  - [X] Topology
+  - [ ] Bottleneck
+  - [ ] Traffic
+- [ ] Data [0/0]
+
+* Introduction
+
+Network problems can often be obscure and challenging to diagnose for end users. When experiencing problems, it can be difficult to know where the problems emerged. The bottleneck could be at the local WiFi, or it could be that one is just accessing a distant server, and therefore is experiencing slowdowns.
+
+One project which aims in helping to detect whether the bottleneck is on the local WiFi, or somewhere else is NETHINT [cite:@barhaugenNETworkHomeINTerference2023]. This project aims to passively listen to all WiFi traffic and to be able to compare the latencies and packet losses for all devices on the WiFi network, as described in [cite:@juterudbarhaugenHomeNetworkInterference2023]. By doing this, it should be able to help detect where the bottleneck is.
+
+In this assignment, the aim is to verify whether the data collected by NETHINT can determine whether the bottleneck is on the local WiFi. This is done by using a TEACUP [cite:@zanderCAIATestbedTEACUP2015] testbed to perform automated experiments on actual machines with different network configurations.
+
+* IN-PROGRESS The testbed
+
+In order to test whether the NETHINT program can determine where the bottleneck is situated, it is necessary to have it listen to various traffic with the bottleneck at different places. For this reason, we have set up the testbed as shown in Figure [[fig:topology]]. This represents a situation where there is one user Client 2 who is streaming a video from Server 2, and another user Client 1 who is doing something else that is consuming bandwidth from Server 1. The goal is to be able to determine whether the traffic between Server 1 and Client 1 is affecting the traffic between /Server 2/ and Client 2.
+
+#+name: fig:topology
+#+caption: Topology of the testbed
+#+attr_latex: :placement [t]
+[[file:figures/topology-wireless.drawio-1.pdf]]
+
+All nodes in Figure [[fig:topology][fig:topology]] are physical computers running Debian Linux, except for the Switch, and are being controlled by another computer not in the figure, using TEACUP. This makes it possible to automate the generation of network traffic, the throughput, and delay at the routers, as well as logging the network traffic.
+
+We are using a switch between the two clients and the first router in order to have the clients both be accessed through the same network interface at Router 1 when running over the wired connection. This allows us to easily limit the bandwidth to both clients at the router and have them share the bandwidth.
+
+The WiFi AP is also connected to the switch and hosts an unencrypted WiFi network. The network is unencrypted because the NETHINT program does not support decrypting the network the WiFi traffic. The two clients are connected to this WiFi network and they can reach the two Servers over it. The WiFi card at Router 1 is set to monitor mode and is used by NETHINT to listen to all the WiFi traffic between the clients and the WiFi AP. In order for the router to listen to the WiFi traffic, the WiFi interface must be set to use the same channel/frequency as the router. Both the WiFi interface at Router 1 and the WiFi AP have therefore been set to use channel 3.
+
+In order to tell the machines how to reach each other, they had to be configured to know where the packets should be sent. As an example Client 2 got configured as follows in the file =/etc/network/interfaces.d/vlan11-iface=:
+#+begin_src conf
+  auto enp36s0
+  iface enp36s0 inet static
+        address 172.16.12.5/24
+        up route add -net 172.16.10.0 netmask 255.255.255.0 gw 172.16.12.254 || true
+        up route add -net 172.16.11.0 netmask 255.255.255.0 gw 172.16.12.254 metric 10 || true
+        up route add -net 10.10.12.0 netmask 255.255.255.0 gw 172.16.12.254 metric 10 || true
+#+end_src
+where =172.16.12.254= is the IP address of the network interface of Router 1 facing the switch. =172.16.11.0= is the IP address of Server 2, and =10.10.12.0= is the IP interface of Server 1. This essentially tells the client that it can reach the two servers through Router 1. The address =172.16.10.0=, which is the interface on Router 1 facing Router 2, had to be added for TEACUP to run as it first wants some of the computers/interfaces to ping each other, and so it had to be possible for Client 2 to ping this interface on Router 1.
+
+The configuration above sets up the routes for running the tests over the wired connection. But we also wanted to run the tests over a wireless connection, which is why =metric 10= is also specified in the configuration above.
+
+As the two clients now can reach the servers through both the WiFi AP and through the cables, they need to be configured to use the correct network interface. This makes it possible to run the command
+#+begin_src sh
+  sudo ip route add 172.16.11.0/24 via 172.16.13.1 metric 2
+#+end_src
+on the client in order to send the traffic over the router, which has IP address =172.16.13.1=, instead of over the cable. Similarly, one can then run
+#+begin_src sh
+  sudo ip route del 172.16.11.0/24 via 172.16.13.1 metric 2
+#+end_src
+in order to use the wired connection again.
+
+** The bottlenecks
+
+# TODO: Talk about delay and q length. Not sure where this best fits in
+
+#+begin_comment
+- Vary the delay at Router 1
+- Vary the q length at Router 1
+- The throughput
+#+end_comment
+
+The bottlenecks are placed at either Router 1, Router 2, or at the WiFi AP. This corresponds to the two users at Client 1 and Client 2 either having a common bottleneck or not having a common bottleneck. When the bottleneck is at Router 2, the user at Client 2 should not be affected too much, as Router 1 should still have room for more bandwidth than is being used.
+
+In order to configure the bottlenecks, we change the throughput at Router 1 and Router 2. The throughput at the WiFi AP is set to the lowest value it supports which is 54 Mbps. The values at Router 1 and Router 2 are then set either higher than this or lower, depending on where the bottleneck should be. The values used at the routers for the three different bottleneck configurations are listed in Table [[table:bottlenecks]].
+
+#+name: table:bottlenecks
+#+caption: Throughput at the two routers in the different bottleneck configurations
+| Bottleneck at: | Router 1 (Mbps) | Router 2 (Mbps) |
+|----------------+-----------------+-----------------|
+| /              |              <> |                 |
+| Router 1       |              15 |              70 |
+| Router 2       |              70 |              15 |
+| WiFi AP        |              70 |              70 |
+
+** Traffic
+
+#+begin_comment
+- Vary the type of flow at Server 1
+- Vary the number of flows at Server 1?
+#+end_comment
+
+ We emulate VoIP traffic, for which we send 20 UDP packets per second with a packet size of 100 bytes (this mimics Skype, which will use TCP when UDP does not work and was found to send at roughly this rate and packet size with occasional outliers [cite:@mazharrathoreExploitingEncryptedTunneled2018]).
+
+* Data                                                             :noexport:
+
+#+include: figures/example_three_plots/figure.tex
+
+* References
+:PROPERTIES:
+:UNNUMBERED: t
+:END:
+#+print_bibliography:
