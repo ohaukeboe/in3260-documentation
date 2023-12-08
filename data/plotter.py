@@ -271,24 +271,24 @@ def _plot_data(
         fig.suptitle(title)
 
     for i, test in enumerate(data.tests()):
-        if correlation is not None:
-            # puts the correlation coefficient in the top left corner (sort of)
-            # min_x = min(
-            #     min(data[test][addr], key=lambda x: x.x).x
-            #     for addr in addrs.addrs()
-            # )
-            # max_y = max(
-            #     max(data[test][addr], key=lambda x: x.y).y
-            #     for addr in addrs.addrs()
-            # )
-            # plt.text(
-            #     x=min_x,
-            #     y=max_y * 1.2,
-            #     va="center",
-            #     ha="center",
-            #     s=f"Correlation: {correlation[test]:.3f}",
-            # )
-            print(f"{test}: {correlation[test]}")
+        # if correlation is not None:
+        # puts the correlation coefficient in the top left corner (sort of)
+        # min_x = min(
+        #     min(data[test][addr], key=lambda x: x.x).x
+        #     for addr in addrs.addrs()
+        # )
+        # max_y = max(
+        #     max(data[test][addr], key=lambda x: x.y).y
+        #     for addr in addrs.addrs()
+        # )
+        # plt.text(
+        #     x=min_x,
+        #     y=max_y * 1.2,
+        #     va="center",
+        #     ha="center",
+        #     s=f"Correlation: {correlation[test]:.3f}",
+        # )
+        # print(f"{test}: {correlation[test]}")
 
         ax = plt.subplot(len(data.tests()), 1, i + 1)
 
@@ -361,7 +361,7 @@ def _plot_data(
         ax.grid()
 
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig(filename, dpi=700)
     else:
         plt.show()
 
@@ -370,6 +370,7 @@ def _plot_correlation(
     data: _Correlation_collection,
     tests: Dict[str, str],
     title: str | None = None,
+    filename: str | None = None,
 ) -> None:
     """Plot a CDF graph of the correlation coefficients."""
     import matplotlib.pyplot as plt
@@ -405,7 +406,10 @@ def _plot_correlation(
     ax.legend()
     ax.grid()
 
-    plt.show()
+    if filename is not None:
+        plt.savefig(filename, dpi=700)
+    else:
+        plt.show()
 
 
 def _calculate_correlation(
@@ -491,6 +495,7 @@ def make_graph(
     filterer: Callable[[_DataPoint], bool] | None = None,
     maper: Callable[[_DataPoint], _DataPoint] | None = None,
     performer: Callable[[_ParsedData], _ParsedData] | None = None,
+    finalcdf: bool = False,
 ):
     """Plot the data in the given directories.
 
@@ -515,9 +520,16 @@ def make_graph(
                      is the address, and the value is the map function.
         performer:   Function to perform on the data. The function should take
                      _RawData as input and return _RawData as output.
+        finalcdf:    Plot the final CDF graph.
     """
     addrs = _Addrs(addresses)
     ip_side = ip_side
+
+    if finalcdf:
+        _filename = None
+        noplot = True
+    else:
+        _filename = filename
 
     datasets: _Correlation_collection = _Correlation_collection({})
 
@@ -551,7 +563,7 @@ def make_graph(
             parsed_data = _get_cdf(parsed_data, tests, addrs, field)
 
         # calculate the correlation coefficient
-        if correlation:
+        if correlation or finalcdf:
             correlations = _calculate_correlation(
                 parsed_data, tests, addrs, field, directory
             )
@@ -561,6 +573,7 @@ def make_graph(
             for test in data.tests():
                 for addr in addrs.addrs():
                     print(
+                        "num_datapoints:"
                         f"{directory}"
                         f"-{test}"
                         f"-{addr}"
@@ -591,31 +604,25 @@ def make_graph(
                 plot_type=plot_type,
                 title=title,
                 correlation=correlations,
-                filename=filename,
+                filename=_filename,
                 y_label=y_label,
                 x_label=x_label,
             )
 
-        if correlations:
+        if finalcdf and correlations is not None:
             datasets.data[directory] = correlations
 
-    if correlation:
-        _plot_correlation(datasets, tests, title)
+    if finalcdf:
+        _plot_correlation(datasets, tests, title, filename)
 
 
 def _parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(description="Python plotter")
     parser.add_argument("directories", nargs="+", help="directories to plot")
-    parser.add_argument(
-        "-n", "--noplot", action="store_true", help="don't plot"
-    )
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="verbose output"
-    )
-    parser.add_argument(
-        "-c", "--correlation", action="store_true", help="correlation"
-    )
+    parser.add_argument("-n", "--noplot", action="store_true", help="don't plot")
+    parser.add_argument("-v", "--verbose", action="store_true", help="verbose output")
+    parser.add_argument("-c", "--correlation", action="store_true", help="correlation")
     parser.add_argument(
         "-f",
         "--field",
@@ -664,6 +671,12 @@ def _parse_args():
         action="store_true",
         help="plot histogram instead of line graph",
     )
+    command_group.add_argument(
+        "-F",
+        "--finalcdf",
+        action="store_true",
+        help="plot final CDF graph",
+    )
 
     args = parser.parse_args()
 
@@ -700,19 +713,20 @@ if __name__ == "__main__":
         "wifi": "Common bottleneck at wifi AP",
     }
 
-    testcase = "router"
-    # testcase = "clients"
+    # testcase = "router"
+    testcase = "clients"
 
     match testcase:
         case "router":
             addresses = {"10.10.12.1": "Source 1", "172.16.11.3": "Source 2"}
             ip_side = "ip_dst"
+            # ip_side = "ip_src"
         case "clients":
             # do something for case2
             addresses = {"172.16.13.3": "Source 1", "172.16.13.4": "Source 2"}
             # addresses = { "172.16.13.4": "Source 2"}
             # addresses = {"172.16.13.3": "Source 1"}
-            ip_side = "ip_src"
+            ip_side = "ip_dst"
 
     # addresses = {"172.16.12.4": "pc04", "172.16.12.5": "pc05"}
     # addresses = {"172.16.13.3": "Source 1", "172.16.13.4": "Source 2"}
@@ -727,7 +741,7 @@ if __name__ == "__main__":
     def filterer(x: _DataPoint) -> bool:
         """Filter out data points."""
         # return x.y > 1 or x.y < -1
-        # return x.y != 0
+        return x.y != 0
         # return 0 != x.y < 3
         return True
 
@@ -777,4 +791,5 @@ if __name__ == "__main__":
         filterer=filterer,
         maper=maper,
         performer=performer,
+        finalcdf=args.finalcdf,
     )

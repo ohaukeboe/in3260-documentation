@@ -47,7 +47,7 @@ We are using a switch between the two clients and the first router in order to h
 The WiFi AP is also connected to the switch and hosts an unencrypted WiFi network. The network is unencrypted because the NETHINT program does not support decrypting the network the WiFi traffic. The two clients are connected to this WiFi network and they can reach the two Servers over it. The WiFi card at Router 1 is set to monitor mode and is used by NETHINT to listen to all the WiFi traffic between the clients and the WiFi AP. In order for the router to listen to the WiFi traffic, the WiFi interface must be set to use the same channel/frequency as the router. Both the WiFi interface at Router 1 and the WiFi AP have therefore been set to use channel 3.
 
 In order to tell the machines how to reach each other, they had to be configured to know where the packets should be sent. As an example Client 2 got configured as follows in the file =/etc/network/interfaces.d/vlan11-iface=:
-#+begin_src conf
+#+begin_src sh
   auto enp36s0
   iface enp36s0 inet static
         address 172.16.12.5/24
@@ -156,9 +156,11 @@ We run the tests with a few different types of traffic between Server 1 and Clie
 - 1 VoIP +  1 Cubic + 1 BBR + 1 Reno
 The VoIP traffic is set up the same way as between Server 2 and Client 2. The different TCP variants were also set up using iperf, but with the flag =-Z CCALGORITHM= where =CCALGORITHM= is one of reno, bbr, or cubic. We also initially had some tests for web traffic and VoIP traffic without the normal TCP traffic, but this did not produce enough traffic to cause any congestion.
 
-* Data                                                             :noexport:
+* Data
 
-#+include: figures/example_three_plots/figure.tex
+# #+include: figures/example_three_plots/figure.tex
+
+NETHINT produces JSON files with one JSON object for each data point, where the data points. The data points are not necessarily individual packets,  but rather information concerning both the data packet and the corresponding ACK. These JSON objects include information such as the rtt and the owd for the packets.
 
 * References
 :PROPERTIES:
@@ -167,5 +169,5 @@ The VoIP traffic is set up the same way as between Server 2 and Client 2. The di
 #+print_bibliography:
 
 # Local Variables:
-# jinx-local-words: "iperf owd qdisc rtt"
+# jinx-local-words: "iperf owd qdisc rtt tex"
 # End:

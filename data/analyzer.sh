@@ -10,7 +10,7 @@ for dir in pcs/*; do
         for z in $test/*.dmp; do
             filename=${z%.dmp}_nethint.log
             echo $filename
-            tmux split-window "python3 ~/projects/nethint/NETHINT/src/main.py --local -r $z -ol $filename"
+            tmux split-window "python3 ~/projects/nethint/NETHINT/src/main.py --local -r $z -l $filename"
 
             # tmux split-window "echo $filename && sleep 10"
             # sed -i 's/}/}\n/g' $filename
@@ -21,12 +21,15 @@ for dir in pcs/*; do
 
     tmux select-pane -t 0
     tmux select-layout even-vertical
-    sleep 570
+    sleep 600
     tmux kill-pane -a
 
     for z in $dir/*/*.dmp; do
         filename=${z%.dmp}_nethint.log
         sed -i 's/}/}\n/g' $filename
+        filename2="${filename%\_pc*}"
+        cat "$filename" >> "$filename2"_nethint.log
+        rm "$filename"
     done
 
     # read -p "Press Enter to continue"
