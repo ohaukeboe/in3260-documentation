@@ -4,7 +4,7 @@
 :options:
 #+latex_class_options: [a4paper,11pt]
 #+language: en
-#+options: toc:nil
+# #+options: toc:nil
 #+startup: hideblocks
 #+bibliography: local-bib.bib
 #+cite_export: csl ~/Zotero/styles/ieee.csl
@@ -16,26 +16,224 @@
 #+latex_header: \usepackage[margin=1.3in]{geometry}
 :end:
 
-* COMMENT todo-list
-- [-] Testbed [1/3]
-  - [X] Topology
-  - [ ] Bottleneck
-  - [ ] Traffic
-- [ ] Data [0/0]
+* COMMENT Outline
+1. **Abstract**
+   - Brief synopsis of the project's purpose, methodology, results, and conclusions.
+
+2. **Introduction**
+   - Theoretical background
+   - Problem statement
+   - Objectives of the study
+   - Significance of the research
+
+3. **Literature Review**
+   - Overview of NETHINT
+   - Related work and comparative analysis
+
+4. **Methodology**
+   - Testbed Configuration
+     - Hardware and software setup
+     - Network topology and node configurations
+   - Examination of Bottlenecks
+     - Positioning of bottlenecks
+     - Parameters affecting bottlenecks (throughput, delay, queue length)
+   - Traffic Generation and Types
+     - TCP/UDP traffic configurations
+     - Variations and effects on the network
+
+5. **Experimental Setup**
+   - Detailed setup steps
+   - Configuration code snippets
+   - Diagrams of network setup and traffic flow
+
+6. **Results**
+   - Data presentation (tables, graphs, statistics)
+   - Analysis of results based on traffic types and bottlenecks
+   - Verification of NETHINT's performance
+
+7. **Discussion**
+   - Interpretation of results
+   - Impact of various configurations on the detection of bottlenecks
+   - Limitations and implications of the findings
+
+8. **Conclusion**
+   - Summary of findings
+   - Contributions of the research to the field
+   - Recommendations for future work
+
+9. **Appendices**
+   - Additional data
+   - Detailed configurations
+
+10. **References**
+    - Cited literature and research materials
 
 * Introduction
 
+#+begin_comment
 Network problems can often be obscure and challenging to diagnose for end users. When experiencing problems, it can be difficult to know where the problems emerged. The bottleneck could be at the local WiFi, or it could be that one is just accessing a distant server, and therefore is experiencing slowdowns.
+#+end_comment
 
+Network performance issues are a pervasive nuisance that can often leave users perplexed about their origin—be it within their local WiFi or due to external factors such as distant servers. Identifying these bottlenecks is critical in maintaining a proficient network experience.
+
+#+begin_comment
 One project which aims in helping to detect whether the bottleneck is on the local WiFi, or somewhere else is NETHINT [cite:@barhaugenNETworkHomeINTerference2023]. This project aims to passively listen to all WiFi traffic and to be able to compare the latencies and packet losses for all devices on the WiFi network, as described in [cite:@juterudbarhaugenHomeNetworkInterference2023]. By doing this, it should be able to help detect where the bottleneck is.
+#+end_comment
 
+One project that attempts to solve this challenge is NETHINT [cite:@barhaugenNETworkHomeINTerference2023], which leverages passive WiFi traffic analysis to evaluate latency and packet loss, providing insights into whether the congestion lies in the local network or not.
+
+#+begin_comment
 In this assignment, the aim is to verify whether the data collected by NETHINT can determine whether the bottleneck is on the local WiFi. This is done by using a TEACUP [cite:@zanderCAIATestbedTEACUP2015] testbed to perform automated experiments on actual machines with different network configurations.
+#+end_comment
 
-* IN-PROGRESS The testbed
+This assignment builds upon the work of NETHINT by empirically testing its capability to discern the location of Bottlenecks within a controlled environment. Utilization of a TEACUP testbed [cite:@zanderCAIATestbedTEACUP2015] facilitates a systematic approach to simulating various network scenarios with different congestion points. Through automated experiments on real machines, this assignment aims to critically evaluate NETHINT's proficiency in accurately identifying whether local WiFi is the limiting factor. The TEACUP configuration used is available at [cite:@oskarOhaukeboeTeacupnethint2023].
 
-In order to test whether the NETHINT program can determine where the bottleneck is situated, it is necessary to have it listen to various traffic with the bottleneck at different places. For this reason, we have set up the testbed as shown in Figure [[fig:topology]]. This represents a situation where there is one user Client 2 who is streaming a video from Server 2, and another user Client 1 who is doing something else that is consuming bandwidth from Server 1. The goal is to be able to determine whether the traffic between Server 1 and Client 1 is affecting the traffic between /Server 2/ and Client 2.
+* Testbed configuration
+The primary distinctive feature of NETHINT is its utilization of passive network measurements, ensuring no interference with the network [cite:@juterudbarhaugenHomeNetworkInterference2023]. It achieves this by monitoring WiFi traffic and analyzing packet timings for each device on the network. This allows for a comparative assessment of the packet delay across different devices, which then can be used to determine whether the devices on the network have a common bottleneck or not. Should a common bottleneck be identified, it likely indicates that congestion exists within the local area network (LAN).
+
+To assess NETHINT's ability to recognize local WiFi bottlenecks, we configured a network topology as shown in Figure [[fig:topology]]. All nodes in this topology are physical computers running Debian Linux, aside from the switch. They are managed by another computer not depicted in the figure, using TEACUP. This setup enables automated generation and control of network traffic throughput and delay at routers, as well as traffic logging.
 
 #+name: fig:topology
+#+caption: Topology of the testbed
+#+attr_latex: :placement [t]
+[[file:figures/topology-wireless.drawio-1.pdf]]
+
+** Network Devices and Configuration
+- /Servers:/ Two servers (Server 1 and Server 2) for generating traffic.
+- /Clients:/ Two clients (Client 1 and Client 2) to act as traffic endpoints.
+- /Routers:/ Two routers with Router 1 being the entry point for both clients.
+- /Switch:/ A switch to connect the clients with Router 1, enabling bandwidth limitation at the router level.
+- /WiFi AP:/ An access point for the wireless segment of the network, set to channel 3 without encryption to accommodate NETHINT's capabilities.
+- /Monitor Mode:/ Router 1's WiFi card, set to monitor mode for traffic sniffing, is also configured to channel 3 to monitor the WiFi AP.
+
+This setup models a scenario where Client 2 streams video from Server 2, while Client 1 consumes bandwidth for different activities from Server 1. The objective is to discern whether traffic between Server 1 and Client 1 interferes with the traffic between Server 2 and Client 2.
+
+*** Configuration details
+We use a switch to connect the two clients to the first router, allowing both clients to access Router 1 through the same network interface for wired connections. This setup facilitates bandwidth limitation at the router, enabling both clients to share the available bandwidth.
+
+The WiFi AP is connected to the switch and provides an unencrypted WiFi network. The lack of encryption is due to NETHINT's inability to decrypt WiFi traffic. Both clients connect to this network, thus gaining access to the two servers. Router 1's WiFi card, configured in monitor mode, is employed by NETHINT to capture all the WiFi traffic between the clients and the WiFi AP. To enable traffic monitoring, the WiFi interface on Router 1 and the WiFi AP are both set to channel 3.
+
+For the machines to recognize how to reach each other, they had to be configured to know where the packets should be sent. Client 2, for example, was configured in the file =/etc/network/interfaces.d/vlan11-iface= as follows:
+#+begin_src sh
+  auto enp36s0
+  iface enp36s0 inet static
+        address 172.16.12.5/24
+        up route add -net 172.16.10.0 netmask 255.255.255.0 gw 172.16.12.254 || true
+        up route add -net 172.16.11.0 netmask 255.255.255.0 gw 172.16.12.254 metric 10 || true
+        up route add -net 10.10.12.0 netmask 255.255.255.0 gw 172.16.12.254 metric 10 || true
+#+end_src
+
+The IP address =172.16.12.254= corresponds to the network interface of Router 1 that faces the switch. The address =172.16.11.0= is linked with Server 2, and =10.10.12.0= with Server 1. This configuration indicates to Client 2 that it can reach the servers via Router 1. The address =172.16.10.0= represents the interface on Router 1 facing Router 2 and was necessary for TEACUP operations, as it requires initial ping tests between certain nodes.
+
+While the above outlines wired connectivity, the main tests needed to run wirelessly, hence the specification of =metric 10= in the routing commands. Given that clients can reach servers both via the WiFi AP and wired connections, it is crucial to ensure they utilize the correct network path. The following commands configure client preferences for network interfaces:
+#+begin_src sh
+  sudo ip route add 172.16.11.0/24 via 172.16.13.1 metric 2
+  sudo ip route del 172.16.11.0/24 via 172.16.13.1 meric 2
+#+end_src
+
+Here, =172.16.13.1= is the IP of the WiFi AP. These commands alternate the traffic route between the wired and wireless interfaces on the clients.
+
+** Examination of bottlenecks
+The bottlenecks are placed at either Router 1, Router 2, or at the WiFi AP. This corresponds to the two users at Client 1 and Client 2 either having a common bottleneck or not having a common bottleneck. When the bottleneck occurs at Router 2, the user at Client 2 is not expected be significantly affected, as Router 1 should still have a surplus of bandwidth.
+
+*** Configuration of throughput limitations
+In order to configure the bottlenecks, we change the throughput at Router 1 and Router 2. The throughput at the WiFi AP is set to the lowest value it supports which is 54 Mbps. Depending on the desired bottleneck location, the throughput at Router 1 and Router 2 was adjusted either above or below this threshold, depending on where the bottleneck should be. Table [[table:bottlenecks]] lists throughput values used in each bottleneck scenario.
+
+#+name: table:bottlenecks
+#+caption: Throughput at the two routers in the different bottleneck configurations
+| Bottleneck at: | Router 1 (Mbps) | Router 2 (Mbps) |
+|----------------+-----------------+-----------------|
+| /              |              <> |                 |
+| Router 1       |              15 |              70 |
+| Router 2       |              70 |              15 |
+| WiFi AP        |              70 |              70 |
+
+*** Additional variable adjustments
+# TODO: explain more about the actuall values used
+In addition to throughput, bot queue length and delay were varied on Router 1. The queue lengths were set to:
+- 0.5 BDP
+- 1 BDP
+- 1.5 BDP
+- 2 BDP
+
+Delays of 50ms and 10ms were tested at Router 1, with Router 2 consistently set at a 10ms delay.
+
+*** TEACUP configuration for
+In order to set these limitations, we used the built-in functions of TEACUP which allows us to set these limitations for the router, and then it runs the tests for each of the values specified. This is done by setting the following variables in the TEACUP configuration:
+
+#+begin_src python
+  # Emulated delays in ms
+  TPCONF_delays = [25,]
+
+  # Emulated bandwidths (downstream, upstream)
+  TPCONF_bandwidths = [
+      ('70mbit', '70mbit'),
+  ]
+
+  # Buffer size
+  TPCONF_buffer_sizes = [31, 62, 93, 124]
+#+end_src
+
+This will run 4 different tests, as there are 4 different buffer sizes specified. Note that the delay here is set to 25ms, as TEACUP sets the delay for both downstream and upstream traffic.
+
+While running the tests, TEACUP creates a matrix from these lists and executes the tests accordingly. However, this approach did not align with our objectives, as we intended to use distinct sets of buffer sizes for each delay configuration. Specifying multiple values for buffer sizes alone prevented an excessive number of test runs by limiting the variable combinations.
+
+Additionally, TEACUP does not support setting different configurations for multiple routers. This meant that we had to limit the bandwidth for Router 2 differently. It was, therefore, easier to have multiple configuration files with different configurations, and then have a script running them.
+
+*** Configuring Router 2 with =tc=
+To configure the delay for Router 2, we utilized the =tc= program to define qdisc rules. TEACUP provides a variable =TPCONF_host_init_custom_cmds= that executes specified commands on a designated machine. We used the following configuration to automatically enforce the desired constraints on Router 2.
+
+#+begin_src python
+  tc_delay = '10ms'
+  tc_rate = '70Mbit'
+  tc_bsize = '18750'
+
+  TPCONF_host_init_custom_cmds = {
+     'pc02' : ['tc qdisc del dev enp13s1 root',
+               'tc qdisc add dev enp13s1 root handle 2: netem delay %s' % tc_delay,
+               'tc qdisc add dev enp13s1 parent 2: handle 3: htb default 10',
+               'tc class add dev enp13s1 parent 3: classid 10 htb rate %s' % tc_rate,
+               'tc qdisc add dev enp13s1 parent 3:10 handle 11: bfifo limit %s' % tc_bsize],
+  }
+#+end_src
+
+# TODO: Maybe say something about the buffersizes
+
+** Traffic generation and types
+For all tests, we use one VoIP traffic connection between Client 2 and Server 2, while we use a few different types of traffic between Server 1 and Client 1. We vary the type of TCP flows by changing the congestion control (CC) algorithm, and the type of traffic. These are:
+- 3 Reno
+- 3 BBR
+- 3 Cubic
+- 1 Cubic + 1 BBR + 1 Reno
+- 1 VoIP + 3 Reno
+- 1 VoIP + 3 Cubic
+- 1 VoIP + 3 BBR
+- 1 VoIP +  1 Cubic + 1 BBR + 1 Reno
+
+We emulate VoIP traffic, for which we send 20 UDP packets per second with a packet size of 100 bytes (this mimics Skype, which will use TCP when UDP does not work and was found to send at roughly this rate and packet size with occasional outliers [cite:@mazharrathoreExploitingEncryptedTunneled2018]). This is done using iperf with the flags =-b 16k -l 100 -i 0.05= at the client. This sends packets of size 100B every 0.05 seconds, which adds up to 16Kb per second. These flags are described in [cite:@ManpageIPERF].
+
+The configuration for VoIP traffic was consistent with that used between Server 2 and Client 2. Different TCP congestion control algorithms were configured in iperf with the =-Z= flag. We also initially had some tests with just web or VoIP traffic, without any normal iperf traffic, but this did not generate sufficient traffic to cause any congestion.
+
+#+begin_src python
+  traffic_iperf = [
+      # pc01 -> pc04
+      ('0.0', '1', " start_iperf, client='pc04', server='pc01', port=5001,"
+       " duration=V_duration, extra_params_client='-R', extra_params_server='-Z bbr' "),
+      ('0.0', '2', " start_iperf, client='pc04', server='pc01', port=5002,"
+       " duration=V_duration, extra_params_client='-R', extra_params_server='-Z bbr' "),
+      ('0.0', '3', " start_iperf, client='pc04', server='pc01', port=5003,"
+       " duration=V_duration, extra_params_client='-R', extra_params_server='-Z bbr' "),
+
+      # pc03 -> pc05
+      ('0.0', '5', " start_iperf, client='pc05', server='pc03', port=5001,"
+       " duration=V_duration, extra_params_client='-b 16k -l 100 -i 0.05 -R' "),
+  ]
+#+end_src
+
+* COMMENT The testbed
+In order to test whether the NETHINT program can determine where the bottleneck is situated, it is necessary to have it listen to various traffic with the bottleneck at different places. For this reason, we have set up the testbed as shown in Figure [[fig:topology]]. This represents a situation where there is one user Client 2 who is streaming a video from Server 2, and another user Client 1 who is doing something else that is consuming bandwidth from Server 1. The goal is to be able to determine whether the traffic between Server 1 and Client 1 is affecting the traffic between /Server 2/ and Client 2.
+
+#+name: fig:topology-old
 #+caption: Topology of the testbed
 #+attr_latex: :placement [t]
 [[file:figures/topology-wireless.drawio-1.pdf]]
@@ -169,5 +367,7 @@ NETHINT produces JSON files with one JSON object for each data point, where the 
 #+print_bibliography:
 
 # Local Variables:
-# jinx-local-words: "iperf owd qdisc rtt tex"
+# jinx-local-words: "NETHINT's iperf owd qdisc rtt tex"
 # End:
+
+#  LocalWords:  WiFi Testbed NETHINT

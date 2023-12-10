@@ -573,7 +573,7 @@ def make_graph(
             for test in data.tests():
                 for addr in addrs.addrs():
                     print(
-                        "num_datapoints:"
+                        "num_datapoints: "
                         f"{directory}"
                         f"-{test}"
                         f"-{addr}"
