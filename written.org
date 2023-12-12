@@ -11,6 +11,7 @@
 #+latex_header: \usepackage{lipsum}
 #+latex_header: \usepackage{subcaption}
 #+latex_header: \usepackage{caption}
+#+latex_header: \usepackage{float}
 #+latex_header: \hypersetup{hidelinks}
 #+latex_header: \usepackage[format=hang, width=.85\textwidth]{caption}
 #+latex_header: \usepackage[margin=1.3in]{geometry}
@@ -69,24 +70,11 @@
     - Cited literature and research materials
 
 * Introduction
-
-#+begin_comment
-Network problems can often be obscure and challenging to diagnose for end users. When experiencing problems, it can be difficult to know where the problems emerged. The bottleneck could be at the local WiFi, or it could be that one is just accessing a distant server, and therefore is experiencing slowdowns.
-#+end_comment
-
-Network performance issues are a pervasive nuisance that can often leave users perplexed about their origin—be it within their local WiFi or due to external factors such as distant servers. Identifying these bottlenecks is critical in maintaining a proficient network experience.
-
-#+begin_comment
-One project which aims in helping to detect whether the bottleneck is on the local WiFi, or somewhere else is NETHINT [cite:@barhaugenNETworkHomeINTerference2023]. This project aims to passively listen to all WiFi traffic and to be able to compare the latencies and packet losses for all devices on the WiFi network, as described in [cite:@juterudbarhaugenHomeNetworkInterference2023]. By doing this, it should be able to help detect where the bottleneck is.
-#+end_comment
+Network performance issues are a widespread nuisance that can often leave users perplexed about their origin—be it within their local WiFi or due to external factors such as distant servers. Identifying these bottlenecks is critical in maintaining a proficient network experience.
 
 One project that attempts to solve this challenge is NETHINT [cite:@barhaugenNETworkHomeINTerference2023], which leverages passive WiFi traffic analysis to evaluate latency and packet loss, providing insights into whether the congestion lies in the local network or not.
 
-#+begin_comment
-In this assignment, the aim is to verify whether the data collected by NETHINT can determine whether the bottleneck is on the local WiFi. This is done by using a TEACUP [cite:@zanderCAIATestbedTEACUP2015] testbed to perform automated experiments on actual machines with different network configurations.
-#+end_comment
-
-This assignment builds upon the work of NETHINT by empirically testing its capability to discern the location of Bottlenecks within a controlled environment. Utilization of a TEACUP testbed [cite:@zanderCAIATestbedTEACUP2015] facilitates a systematic approach to simulating various network scenarios with different congestion points. Through automated experiments on real machines, this assignment aims to critically evaluate NETHINT's proficiency in accurately identifying whether local WiFi is the limiting factor. The TEACUP configuration used is available at [cite:@oskarOhaukeboeTeacupnethint2023].
+This assignment builds upon the work of NETHINT by empirically testing its capability to discern the location of Bottlenecks within a controlled environment. Utilization of a TEACUP testbed [cite:@zanderCAIATestbedTEACUP2015] facilitates a systematic approach to simulating various network scenarios with different points of congestion. Through automated experiments on real machines, this assignment aims to critically evaluate NETHINT's proficiency in accurately identifying whether local WiFi is the limiting factor. The TEACUP configuration used is available at [cite:@oskarOhaukeboeTeacupnethint2023].
 
 * Testbed configuration
 The primary distinctive feature of NETHINT is its utilization of passive network measurements, ensuring no interference with the network [cite:@juterudbarhaugenHomeNetworkInterference2023]. It achieves this by monitoring WiFi traffic and analyzing packet timings for each device on the network. This allows for a comparative assessment of the packet delay across different devices, which then can be used to determine whether the devices on the network have a common bottleneck or not. Should a common bottleneck be identified, it likely indicates that congestion exists within the local area network (LAN).
@@ -133,7 +121,7 @@ While the above outlines wired connectivity, the main tests needed to run wirele
 
 Here, =172.16.13.1= is the IP of the WiFi AP. These commands alternate the traffic route between the wired and wireless interfaces on the clients.
 
-** Examination of bottlenecks
+** Bottleneck configuration
 The bottlenecks are placed at either Router 1, Router 2, or at the WiFi AP. This corresponds to the two users at Client 1 and Client 2 either having a common bottleneck or not having a common bottleneck. When the bottleneck occurs at Router 2, the user at Client 2 is not expected be significantly affected, as Router 1 should still have a surplus of bandwidth.
 
 *** Configuration of throughput limitations
@@ -143,22 +131,30 @@ In order to configure the bottlenecks, we change the throughput at Router 1 and 
 #+caption: Throughput at the two routers in the different bottleneck configurations
 | Bottleneck at: | Router 1 (Mbps) | Router 2 (Mbps) |
 |----------------+-----------------+-----------------|
-| /              |              <> |                 |
 | Router 1       |              15 |              70 |
 | Router 2       |              70 |              15 |
 | WiFi AP        |              70 |              70 |
 
-*** Additional variable adjustments
-# TODO: explain more about the actuall values used
+*** TODO Additional variable adjustments
+# TODO: explain more about the actual values used
 In addition to throughput, bot queue length and delay were varied on Router 1. The queue lengths were set to:
 - 0.5 BDP
 - 1 BDP
 - 1.5 BDP
 - 2 BDP
 
-Delays of 50ms and 10ms were tested at Router 1, with Router 2 consistently set at a 10ms delay.
+Delays of 50ms and 10ms were tested at Router 1, with Router 2 consistently set at a 10ms delay. The actual buffer-sizes used for the tests are listed in Table [[table:bufsizes]].
 
-*** TEACUP configuration for
+#+name: table:bufsizes
+#+caption: Buffer sizes used (in number of packets) for the different delay and bdp configurations
+|         | 10ms delay | 50ms delay |
+|---------+------------+------------|
+| 0.5 BDP |          6 |         31 |
+| 1 BDP   |         12 |         62 |
+| 1.5 BDP |         18 |         93 |
+| 2 BDP   |         24 |        124 |
+
+*** TEACUP configuration
 In order to set these limitations, we used the built-in functions of TEACUP which allows us to set these limitations for the router, and then it runs the tests for each of the values specified. This is done by setting the following variables in the TEACUP configuration:
 
 #+begin_src python
@@ -176,18 +172,26 @@ In order to set these limitations, we used the built-in functions of TEACUP whic
 
 This will run 4 different tests, as there are 4 different buffer sizes specified. Note that the delay here is set to 25ms, as TEACUP sets the delay for both downstream and upstream traffic.
 
-While running the tests, TEACUP creates a matrix from these lists and executes the tests accordingly. However, this approach did not align with our objectives, as we intended to use distinct sets of buffer sizes for each delay configuration. Specifying multiple values for buffer sizes alone prevented an excessive number of test runs by limiting the variable combinations.
+While running the tests, TEACUP creates a matrix from these lists and executes the tests accordingly. However, this approach did not align with our objectives, as we intended to use distinct sets of buffer sizes for each delay configuration. Specifying multiple values for buffer sizes alone prevented an excessive number of test runs by limiting the variable combinations. We then change the other variables by using multiple configuration files and swapping them for each test-run.
 
-Additionally, TEACUP does not support setting different configurations for multiple routers. This meant that we had to limit the bandwidth for Router 2 differently. It was, therefore, easier to have multiple configuration files with different configurations, and then have a script running them.
+These values are set for Router 1 using the configuration below. This sets the values for traffic passing through the network interface facing the switch.
+
+#+begin_src python
+  TPCONF_router_queues = [
+    # Set same delay for every host
+      ('1', " source='0.0.0.0/0', dest='172.16.12.0/24', delay=V_delay, "
+       " loss=V_loss, rate=V_up_rate, queue_disc=V_aqm, queue_size=V_bsize "),
+      ('2', " source='172.16.12.0/24', dest='0.0.0.0/0', delay=V_delay, "
+       " loss=V_loss, rate=V_down_rate, queue_disc=V_aqm, queue_size=V_bsize "),
+  ]
+#+end_src
+
+TEACUP does not support setting different configurations for multiple routers. This meant that we had to limit the bandwidth for Router 2 differently.
 
 *** Configuring Router 2 with =tc=
 To configure the delay for Router 2, we utilized the =tc= program to define qdisc rules. TEACUP provides a variable =TPCONF_host_init_custom_cmds= that executes specified commands on a designated machine. We used the following configuration to automatically enforce the desired constraints on Router 2.
 
 #+begin_src python
-  tc_delay = '10ms'
-  tc_rate = '70Mbit'
-  tc_bsize = '18750'
-
   TPCONF_host_init_custom_cmds = {
      'pc02' : ['tc qdisc del dev enp13s1 root',
                'tc qdisc add dev enp13s1 root handle 2: netem delay %s' % tc_delay,
@@ -197,22 +201,24 @@ To configure the delay for Router 2, we utilized the =tc= program to define qdis
   }
 #+end_src
 
-# TODO: Maybe say something about the buffersizes
+The =tc_rate= values were aligned with those specified in [[table:bottlenecks]], and =tc_delay= was consistently set to =10ms=, in accordance with the delay used for all tests. The =tc_bsize= was configured to equal 1 BDP.
 
 ** Traffic generation and types
 For all tests, we use one VoIP traffic connection between Client 2 and Server 2, while we use a few different types of traffic between Server 1 and Client 1. We vary the type of TCP flows by changing the congestion control (CC) algorithm, and the type of traffic. These are:
-- 3 Reno
-- 3 BBR
-- 3 Cubic
-- 1 Cubic + 1 BBR + 1 Reno
-- 1 VoIP + 3 Reno
-- 1 VoIP + 3 Cubic
-- 1 VoIP + 3 BBR
-- 1 VoIP +  1 Cubic + 1 BBR + 1 Reno
+- Triple flow using CC algorithm Reno
+- Triple flow using CC algorithm BBR
+- Triple flow using CC algorithm Cubic
+- Mixed flow consisting of one each of Cubic, BBR, and Reno
+- VoIP plus triple Reno
+- VoIP plus triple Cubic
+- VoIP plus triple BBR
+- VoIP combined with one each of Cubic, BBR, and Reno
 
 We emulate VoIP traffic, for which we send 20 UDP packets per second with a packet size of 100 bytes (this mimics Skype, which will use TCP when UDP does not work and was found to send at roughly this rate and packet size with occasional outliers [cite:@mazharrathoreExploitingEncryptedTunneled2018]). This is done using iperf with the flags =-b 16k -l 100 -i 0.05= at the client. This sends packets of size 100B every 0.05 seconds, which adds up to 16Kb per second. These flags are described in [cite:@ManpageIPERF].
 
 The configuration for VoIP traffic was consistent with that used between Server 2 and Client 2. Different TCP congestion control algorithms were configured in iperf with the =-Z= flag. We also initially had some tests with just web or VoIP traffic, without any normal iperf traffic, but this did not generate sufficient traffic to cause any congestion.
+
+The below source block details how the traffic generation was configured. It features three BBR streams between Server 1 and Client 1, and one VoIP stream between Server 2 and Client 2. =pc01= and =pc04= corresponds to Server 1 and Client 1 respectively, while =pc03= and =pc05= corresponds to Server 2 and Client 2 respectively.
 
 #+begin_src python
   traffic_iperf = [
@@ -230,135 +236,138 @@ The configuration for VoIP traffic was consistent with that used between Server 
   ]
 #+end_src
 
-* COMMENT The testbed
-In order to test whether the NETHINT program can determine where the bottleneck is situated, it is necessary to have it listen to various traffic with the bottleneck at different places. For this reason, we have set up the testbed as shown in Figure [[fig:topology]]. This represents a situation where there is one user Client 2 who is streaming a video from Server 2, and another user Client 1 who is doing something else that is consuming bandwidth from Server 1. The goal is to be able to determine whether the traffic between Server 1 and Client 1 is affecting the traffic between /Server 2/ and Client 2.
+By default, iperf transmits data from the client to the server, but the `-R` flag reverses this direction. We utilize the `-R` flag instead of swapping server and client roles due to the home router functioning as the WiFi AP and employing NAT. This makes it essential to ensure that the clients are the ones to initiate the connection.
 
-#+name: fig:topology-old
-#+caption: Topology of the testbed
-#+attr_latex: :placement [t]
-[[file:figures/topology-wireless.drawio-1.pdf]]
+** Collecting data
+When running tests with TEACUP, it automatically collects pcap files using tcpdump, on the network interfaces that have an IP address. In addition, we set up NETHINT on Router 1 to listen to the WiFi traffic using the wireless network interface. As NETHINT writes the collected data to a file, we had to make a custom function in the TEACUP program to set up this as a logger.
 
-All nodes in Figure [[fig:topology][fig:topology]] are physical computers running Debian Linux, except for the Switch, and are being controlled by another computer not in the figure, using TEACUP. This makes it possible to automate the generation of network traffic, the throughput, and delay at the routers, as well as logging the network traffic.
-
-We are using a switch between the two clients and the first router in order to have the clients both be accessed through the same network interface at Router 1 when running over the wired connection. This allows us to easily limit the bandwidth to both clients at the router and have them share the bandwidth.
-
-The WiFi AP is also connected to the switch and hosts an unencrypted WiFi network. The network is unencrypted because the NETHINT program does not support decrypting the network the WiFi traffic. The two clients are connected to this WiFi network and they can reach the two Servers over it. The WiFi card at Router 1 is set to monitor mode and is used by NETHINT to listen to all the WiFi traffic between the clients and the WiFi AP. In order for the router to listen to the WiFi traffic, the WiFi interface must be set to use the same channel/frequency as the router. Both the WiFi interface at Router 1 and the WiFi AP have therefore been set to use channel 3.
-
-In order to tell the machines how to reach each other, they had to be configured to know where the packets should be sent. As an example Client 2 got configured as follows in the file =/etc/network/interfaces.d/vlan11-iface=:
-#+begin_src sh
-  auto enp36s0
-  iface enp36s0 inet static
-        address 172.16.12.5/24
-        up route add -net 172.16.10.0 netmask 255.255.255.0 gw 172.16.12.254 || true
-        up route add -net 172.16.11.0 netmask 255.255.255.0 gw 172.16.12.254 metric 10 || true
-        up route add -net 10.10.12.0 netmask 255.255.255.0 gw 172.16.12.254 metric 10 || true
-#+end_src
-where =172.16.12.254= is the IP address of the network interface of Router 1 facing the switch. =172.16.11.0= is the IP address of Server 2, and =10.10.12.0= is the IP interface of Server 1. This essentially tells the client that it can reach the two servers through Router 1. The address =172.16.10.0=, which is the interface on Router 1 facing Router 2, had to be added for TEACUP to run as it first wants some of the computers/interfaces to ping each other, and so it had to be possible for Client 2 to ping this interface on Router 1.
-
-The configuration above sets up the routes for running the tests over the wired connection. But we also wanted to run the tests over a wireless connection, which is why =metric 10= is also specified in the configuration above.
-
-As the two clients now can reach the servers through both the WiFi AP and through the cables, they need to be configured to use the correct network interface. This makes it possible to run the command
-#+begin_src sh
-  sudo ip route add 172.16.11.0/24 via 172.16.13.1 metric 2
-#+end_src
-on the client in order to send the traffic over the router, which has IP address =172.16.13.1=, instead of over the cable. Similarly, one can then run
-#+begin_src sh
-  sudo ip route del 172.16.11.0/24 via 172.16.13.1 metric 2
-#+end_src
-in order to use the wired connection again.
-
-** The bottlenecks
-
-# TODO: Talk about delay and q length. Not sure where this best fits in
-
-#+begin_comment
-- Vary the delay at Router 1
-- Vary the q length at Router 1
-- The throughput
-#+end_comment
-
-The bottlenecks are placed at either Router 1, Router 2, or at the WiFi AP. This corresponds to the two users at Client 1 and Client 2 either having a common bottleneck or not having a common bottleneck. When the bottleneck is at Router 2, the user at Client 2 should not be affected too much, as Router 1 should still have room for more bandwidth than is being used.
-
-In order to configure the bottlenecks, we change the throughput at Router 1 and Router 2. The throughput at the WiFi AP is set to the lowest value it supports which is 54 Mbps. The values at Router 1 and Router 2 are then set either higher than this or lower, depending on where the bottleneck should be. The values used at the routers for the three different bottleneck configurations are listed in Table [[table:bottlenecks]].
-
-#+name: table:bottlenecks
-#+caption: Throughput at the two routers in the different bottleneck configurations
-| Bottleneck at: | Router 1 (Mbps) | Router 2 (Mbps) |
-|----------------+-----------------+-----------------|
-| /              |              <> |                 |
-| Router 1       |              15 |              70 |
-| Router 2       |              70 |              15 |
-| WiFi AP        |              70 |              70 |
-
-While the throughput is the main way in which we decide where the bottleneck is, we also change some other variables. These are the queue length at Router 1 and the delay at Router 1. The queue lengths used are:
-- 0.5 BDP
-- 1 BDP
-- 1.5 BDP
-- 2 BDP
-
-The tests were also run with both a delay of 50ms and 10ms at Router 1. Additionally, Router 2 always had a delay of 10ms.
-
-In order to set these limitations, we used the built-in functions of TEACUP which allows us to set these limitations for the router, and then it runs the tests for each of the values specified. This is done by setting the following variables in the TEACUP configuration:
 #+begin_src python
-  # Emulated delays in ms
-  TPCONF_delays = [25,]
+  @parallel
+  def start_nethint_logger(file_prefix='', remote_dir='', local_dir='.'):
+      # log queue length and queue delay
+      logfile = remote_dir + file_prefix + '_' + \
+              env.host_string.replace(":", "_") + "_nethint.log"
 
-  # Emulated bandwidths (downstream, upstream)
-  TPCONF_bandwidths = [
-      ('70mbit', '70mbit'),
-  ]
+      # For listening to wireless interface
+      pid = runbg('/home/teacup/oskar/NETHINT/src/main.py --wireless -l %s 6' % logfile)
 
-  # Buffer size
-  TPCONF_buffer_sizes = [31, 62, 93, 124]
+      bgproc.register_proc_later(
+             env.host_string,
+             local_dir,
+             'nethintlogger',
+             '00',
+             pid,
+             logfile)
+
 #+end_src
-This will run 4 different tests, as there are 4 different buffer sizes specified. Also, note that the delay here is set to 25ms. This is because TEACUP sets the delay for both downstream and upstream. Hence, the total delay for the rtt of the packets is 50.
 
-When running the tests TEACUP sets up a mix between these lists and runs the tests. But this is not what we wanted to do, which is why only the buffer sizes have multiple values specified. As we wanted to use a different set of buffer sizes for each delay configuration, it would cause us to run more tests than necessary.
+And then call in in the =start_loggers= function in =loggers.py= as:
 
-Additionally, TEACUP does not support setting different configurations for multiple routers. This meant that we had to limit the bandwidth for Router 2 in a different way. It was, therefore, easier to have multiple configuration files with different configurations, and then have a script running them.
-
-In order to set the delay for Router 2, we used the =tc= program to set qdisc rules. TEACUP has a variable =TPCONF_host_init_custom_cmds= which runs commands specified on a specified machine. we used the following configuration for automatically setting the correct limitations on Router 2.
 #+begin_src python
-  tc_delay = '10ms'
-  tc_rate = '70Mbit'
-  tc_bsize = '18750'
-
-  TPCONF_host_init_custom_cmds = {
-     'pc02' : ['tc qdisc del dev enp13s1 root',
-               'tc qdisc add dev enp13s1 root handle 2: netem delay %s' % tc_delay,
-               'tc qdisc add dev enp13s1 parent 2: handle 3: htb default 10',
-               'tc class add dev enp13s1 parent 3: classid 10 htb rate %s' % tc_rate,
-               'tc qdisc add dev enp13s1 parent 3:10 handle 11: bfifo limit %s' % tc_bsize],
-  }
+  execute(
+      start_nethint_logger,
+      file_prefix,
+      remote_dir,
+      local_dir,
+      hosts=config.TPCONF_router)
 #+end_src
 
-# TODO: Maybe say something about the buffersizes
+NETHINT operates as a logger on Router 1. Since NETHINT is monitoring a wireless network card, it must be executed with the =--wireless= flag. Additionally, it is configured to use the 6th network interface, which corresponds to the wireless network interface.
 
-** Traffic
+* Changes made to NETHINT
+In order to calculate the correlation between the network streams, we needed to make a few small changes to the NETHINT program. We also found a miscalculation which had to be fixed. These changes were:
 
-#+begin_comment
-- Vary the type of flow at Server 1
-- Vary the number of flows at Server 1?
-#+end_comment
+- Enabled logging of the raw OWD, rather than solely the variations in OWD.
+- Corrected the OWD calculation.
+- Modified it to save information about all packets, not just those with a valid RTT.
 
-In order for NETHINT to determine the rtt and owd for the network packets, it is necessary to use TCP. Between Server 2 and Client 2 we emulate VoIP traffic, for which we send 20 UDP packets per second with a packet size of 100 bytes (this mimics Skype, which will use TCP when UDP does not work and was found to send at roughly this rate and packet size with occasional outliers [cite:@mazharrathoreExploitingEncryptedTunneled2018]). This is done using iperf with the flags =-b 16k -l 100 -i 0.05= at the client. This sends packets of size 100B every 0.05 seconds, which adds up to 16Kb per second. These flags are described in [cite:@ManpageIPERF].
+NETHINT produces JSON files, each with a JSON object representing the data for an individual packet. Within each object, there is information about the destination and source IP addresses and ports, alongside data pertaining to RTT and OWD among other details. Initially, the program was designed to save only the packets for which it could calculate an RTT. However, other metrics, such as OWD, may be valuable even when RTT data is unavailable. The way that NETHINT calculates the RTT only works for outgoing traffic, which meant that it did not log any packets belonging to incoming traffic. Consequently, we have made certain modifications to NETHINT that expand the range of data it logs. Details of these changes can be found in [cite:@oskarOhaukeboeNETHINT2023]. To change this, it was only one line which had to be changed:
 
-We run the tests with a few different types of traffic between Server 1 and Client 1. The different types of traffic are:
-- 3 Reno
-- 3 BBR
-- 3 Cubic
-- 1 Cubic + 1 BBR + 1 Reno
-- 1 VoIP + 3 Reno
-- 1 VoIP + 3 Cubic
-- 1 VoIP + 3 BBR
-- 1 VoIP +  1 Cubic + 1 BBR + 1 Reno
-The VoIP traffic is set up the same way as between Server 2 and Client 2. The different TCP variants were also set up using iperf, but with the flag =-Z CCALGORITHM= where =CCALGORITHM= is one of reno, bbr, or cubic. We also initially had some tests for web traffic and VoIP traffic without the normal TCP traffic, but this did not produce enough traffic to cause any congestion.
+#+begin_src
+  - if isset_log() and valid_rtt:
+  + if isset_log():
+#+end_src
+
+Additionally, there was a mistake in the calculation of the OWD. The OWD is calculated by subtracting the tsval in the timestamp field from the capture time. However, the capture time is given in seconds, while the tsval is in milliseconds, hence, the capture time had to be converted to milliseconds. This was also a rather easy change:
+
+#+begin_src
+  - owd = self.cap_time - self.tsval
+  + owd = int(self.cap_time * 1000) - self.tsval
+#+end_src
+
+The value given in tsval is not usually the actual time, but rather a value given by a "timestamp clock", nevertheless it should be approximately proportional to real time [cite:@bormanTCPExtensionsHigh2014]. This means that the calculated OWD is not really the actual time it takes for the packets to travel one way, but that it still is a number which says something about how the OWD changes. This is fine for our purpose as we are considering how the OWD changes with time, and not the actual values. Though we still need to have the actual OWD values for
+
+The value in tsval is typically not the actual time but a value from a "timestamp clock," which should be approximately proportional to real time [cite:@bormanTCPExtensionsHigh2014]. Therefore, while the calculated OWD may not reflect the precise time it takes for packets to traverse one way, it is still a number indicative of relative changes in OWD. For our purposes, this is sufficient, however, we still the raw OWD values for our analysis. NETHINT was originally programmed to record the variations in OWD, necessitating a modification to enable the logging of raw OWD values.
+
+* Other limitations experienced with NETHINT
+
+- Not able to capture all data
+- High RAM usage
+- Long processing time of the pcap files (longer that it took to collect them)
 
 * Data
+In order to compare how the OWD changes between the different bottleneck location configurations, we first calculate the correlation coefficient between the two traffic paths (Server 1 to Client 1 and Server 2 to Client 2). For this we collect the data from the JSON objects by comparing the destination address. This means that we don't differentiate between the different TCP streams between Server 1 and Client 1, but that we look at all data going towards Client 1 as a whole. This gives us two datasets, one for traffic towards Client 1 and one of traffic towards Client 2. The x here are the capture times, while the y values are the OWD values.
 
-# #+include: figures/example_three_plots/figure.tex
+When calculating the correlation coefficient between these two datasets, we get a number representing how much they move together. That is, when one dataset increases, how much does the other increase. In order to calculate this, it is necessary that both datasets are of equal length, and have corresponding x values. This is almost guaranteed not to be the case. To solve this, we interpolate the smaller dataset using numpy, by setting:
+#+begin_src python
+  y2 = np.interp(x1, x2, y2)
+#+end_src
+where =x2= and =y2= correspond to the x and y values of the smaller dataset, while =x1= is the x values of the larger dataset.
 
-NETHINT produces JSON files with one JSON object for each data point, where the data points. The data points are not necessarily individual packets,  but rather information concerning both the data packet and the corresponding ACK. These JSON objects include information such as the rtt and the owd for the packets.
+After interpolating the dataset, we calculate the correlation coefficient using =scipy.stats=:
+#+begin_src python
+  corr, _ = stats.pearsonr(y1, y2)
+#+end_src
+
+We calculate this correlation coefficient for each test. Then we calculate the CDF for the correlations for each bottleneck configuration. This is done using numpy:
+#+begin_src python
+  x = np.sort(y_values)
+  y = np.arange(1, len(x) + 1) / len(x)
+#+end_src
+
+# TODO: revise caption
+#+name: fig:cdf-no-only-video
+#+caption: CDF graph for all test cases
+#+attr_latex: :width 0.7\textwidth
+[[file:figures/results/all-over2-no-only-video.pdf]]
+
+Figure [[fig:cdf-no-only-video]] shows the CDF for the correlation coefficient for all the tests. It shows that there is a clear difference in how the OWD changes over time between when the two traffic routes have a common bottleneck and when they do not. It can also be seen that if the correlation coefficient is greater than 0.7, it is very likely that there is a common bottleneck. However, there are still some tests, where also the configuration with no common bottleneck have a very high correlation coefficient, so this value being high does not guarantee that there is a common bottleneck.
+
+#+name: fig:cdf-no-video
+#+caption: CDF graph for all tests without VoIP traffic
+#+attr_latex: :width 0.7\textwidth
+[[file:figures/results/all-over2-no-video.pdf]]
+
+An interesting aspect is that all tests where the correlation coefficient for no common bottleneck in Figure [[fig:cdf-no-only-video]] was above 0.7 also had VoIP traffic between Server 1 and Client 1. When excluding all tests that also had VoIP traffic between these, the highest correlation coefficient for no common bottleneck was 0.623. The entire CDF plot for this is shown in Figure [[fig:cdf-no-video]] where it is a clear gap between the highest correlation values for when there is no common bottleneck and when there is.
+
+** Only VoIP traffic
+
+A possible explanation for why having VoIP traffic between Server 1 and Client 1 causes such high correlation could be that having identical traffic patterns directed towards both clients at simultaneously can make it seem more correlated than it should be, despite the presence of other concurrent traffic. We also ran some tests with just VoIP traffic between Server 1 and Client 1, meaning that the traffic going to the two Clients should be now identical. When only running VoIP traffic like this, we did not generate enough traffic to reach any of the configured throughputs, meaning that essentially all tests like this was without any common bottleneck. For this reason, we have combined all the tests into just one CDF plot shown in Figure [[fig:cdf-only-video]], where it shows that this traffic tends to seem either very correlated or not very correlated at all, which confirms that the type of traffic being similar can be enough to get very high correlation values.
+
+#+name: fig:cdf-only-video
+#+caption: CDF graph for traffic only containing of VoIP traffic
+#+attr_latex: :width 0.7\textwidth
+[[file:figures/results/only-video-combined.pdf]]
+
+** Double CDF
+
+Another way to compare the traffic is to first calculate the CDF for the raw OWDs for traffic directed towards the two Clients. This allows for comparing the distribution of OWD values instead of how the OWD values changes over time. Since the OWD values are not actual real clock time, they will vary significantly in actual values. It is therefore necessary to align the OWD values. We have done this by moving all OWD values such that the lowest OWD value for each client becomes 0. This means that all other OWD value essentially represent how much longer the OWD is compared to the lowest OWD, and that the calculated correlation represent how similar this distribution is between the two clients. As can be seen in Figure [[fig:double-cdf-all]] this did not actually affect the CDF for no common bottleneck, except for decreasing the highest CDF values slightly compared to in Figure [[fig:cdf-no-only-video]]. However, the values for both configurations with a common bottleneck now appear significantly more correlated.
+
+# TODO: mention actual values
+
+#+name: fig:double-cdf-all
+#+caption: CDF of correlation coefficients of CDF
+#+attr_latex: :width 0.7\textwidth
+[[file:figures/results/double-cdf-all.pdf]]
+
+#+name: fig:nethint
+#+caption: Image of NETHINT
+[[file:figures/nethint.png]]
+
+
+#+include: figures/delay/delay.tex
+
+#+include: figures/bdp/bdp.tex
 
 * References
 :PROPERTIES:
@@ -367,7 +376,7 @@ NETHINT produces JSON files with one JSON object for each data point, where the 
 #+print_bibliography:
 
 # Local Variables:
-# jinx-local-words: "NETHINT's iperf owd qdisc rtt tex"
+# jinx-local-words: "NETHINT's iperf OWD qdisc RTT tex tsval"
 # End:
 
-#  LocalWords:  WiFi Testbed NETHINT
+#  LocalWords:  WiFi Testbed NETHINT tsval OWD RTT

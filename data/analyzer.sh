@@ -1,7 +1,9 @@
 #!/bin/sh
 
+directory='final-data-under2'
+
 # shopt -s globstar
-for dir in pcs/*; do
+for dir in $directory/*; do
     echo "$dir"
 
     for test in $dir/*; do

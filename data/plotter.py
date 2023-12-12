@@ -122,11 +122,15 @@ class _ParsedData:
 
     def __init__(self, data: Dict[str, _ParsedDataAddrs]):
         """Initialize the data point."""
-        self.data = data
+        self.data: Dict[str, _ParsedDataAddrs] = data
 
     def __getitem__(self, test: str) -> _ParsedDataAddrs:
         """Get the data for the given key."""
         return self.data[test]
+
+    def __iter__(self) -> Iterator[str]:
+        """Return an iterator."""
+        return iter(self.data.keys())
 
     def tests(self) -> List[str]:
         """Return the tests."""
@@ -265,31 +269,11 @@ def _plot_data(
 
     fig, ax = plt.subplots(nrows=len(data.tests()), ncols=1)
     fig.subplots_adjust(hspace=1)
-    plt.rcParams.update({"font.size": 10})
 
     if title is not None:
         fig.suptitle(title)
 
-    for i, test in enumerate(data.tests()):
-        # if correlation is not None:
-        # puts the correlation coefficient in the top left corner (sort of)
-        # min_x = min(
-        #     min(data[test][addr], key=lambda x: x.x).x
-        #     for addr in addrs.addrs()
-        # )
-        # max_y = max(
-        #     max(data[test][addr], key=lambda x: x.y).y
-        #     for addr in addrs.addrs()
-        # )
-        # plt.text(
-        #     x=min_x,
-        #     y=max_y * 1.2,
-        #     va="center",
-        #     ha="center",
-        #     s=f"Correlation: {correlation[test]:.3f}",
-        # )
-        # print(f"{test}: {correlation[test]}")
-
+    for i, test in enumerate(sorted(data.tests())):
         ax = plt.subplot(len(data.tests()), 1, i + 1)
 
         def _plot_data_points(ax: Any, test: str):
@@ -328,21 +312,6 @@ def _plot_data(
                     labels=[addrs[addr]],
                     positions=[i],
                 )
-            # x_values: List[List] = []
-            # y_values: List[List] = []
-            # for addr in addrs.addrs():
-            #     x_values.append(
-            #         [data_point.x for data_point in data[test][addr]]
-            #     )
-            #     y_values.append(
-            #         [data_point.y for data_point in data[test][addr]]
-            #     )
-
-            # for device in range(len(x_values)):
-            #     ax.boxplot(
-            #         y_values[device],
-            #         positions=[device],
-            #     )
 
         match plot_type:
             case "boxplot":
@@ -371,17 +340,23 @@ def _plot_correlation(
     tests: Dict[str, str],
     title: str | None = None,
     filename: str | None = None,
+    legend_loc: str | None = None,
 ) -> None:
     """Plot a CDF graph of the correlation coefficients."""
     import matplotlib.pyplot as plt
+    import scienceplots  # type: ignore
     import math
 
-    fig, ax = plt.subplots(nrows=1, ncols=1)
-    # fig, ax = plt.subplots(nrows=len(tests), ncols=1)
-    fig.subplots_adjust(hspace=1)
-    plt.rcParams.update({"font.size": 10})
+    plt.style.use(["science", "grid", "ieee"])
+    # plt.rcParams.update({"legend.fontsize": "small", "axes.labelsize": "large"})
+    plt.rcParams.update({"axes.labelsize": "x-large"})
 
-    for testcase in tests:  # Testcase is common, nocommon, wifi
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    fig.subplots_adjust(hspace=1)
+
+    for testcase in sorted(
+        tests.keys(), key=lambda k: tests[k]
+    ):  # Testcase is common, nocommon, wifi
         ax = plt.subplot(1, 1, 1)
 
         y_values: List[float] = []
@@ -397,17 +372,18 @@ def _plot_correlation(
 
     if title is not None:
         ax.set_title(title)
-    else:
-        ax.set_title("CDF of correlation coefficients")
 
     ax.set_xlabel("Correlation coefficient")
     ax.set_ylabel("CDF")
 
-    ax.legend()
-    ax.grid()
+    if legend_loc is not None:
+        ax.legend(loc=legend_loc)
+    else:
+        ax.legend()
+    # ax.grid()
 
     if filename is not None:
-        plt.savefig(filename, dpi=700)
+        plt.savefig(filename)
     else:
         plt.show()
 
@@ -439,7 +415,7 @@ def _calculate_correlation(
             print(f"{directory}" f"-{test}" f": no data (correlation)")
             continue
 
-        # interpolate the data
+        # interpolate the data so that they have the same x values
         x1 = np.array(x1_values)
         y1 = np.array(y1_values)
         x2 = np.array(x2_values)
@@ -496,6 +472,7 @@ def make_graph(
     maper: Callable[[_DataPoint], _DataPoint] | None = None,
     performer: Callable[[_ParsedData], _ParsedData] | None = None,
     finalcdf: bool = False,
+    legend_loc: str | None = None,
 ):
     """Plot the data in the given directories.
 
@@ -613,7 +590,7 @@ def make_graph(
             datasets.data[directory] = correlations
 
     if finalcdf:
-        _plot_correlation(datasets, tests, title, filename)
+        _plot_correlation(datasets, tests, title, filename, legend_loc)
 
 
 def _parse_args():
@@ -654,6 +631,16 @@ def _parse_args():
         type=str,
         help="output file extension",
     )
+    parser.add_argument(
+        "-l",
+        "--legend",
+        action="store",
+        type=str,
+        help="legend location",
+    )
+    parser.add_argument(
+        "-C", "--cdf", action="store_true", help="plot CDF graph"
+    )
 
     command_group = parser.add_mutually_exclusive_group()
     command_group.add_argument(
@@ -661,9 +648,6 @@ def _parse_args():
         "--boxplot",
         action="store_true",
         help="plot boxplot instead of line graph",
-    )
-    command_group.add_argument(
-        "-C", "--cdf", action="store_true", help="plot CDF graph"
     )
     command_group.add_argument(
         "-H",
@@ -707,10 +691,14 @@ if __name__ == "__main__":
     elif args.histogram:
         plot_type = "histogram"
 
+    legend_loc: str | None = None
+    if args.legend is not None:
+        legend_loc = args.legend
+
     tests = {
         "common": "Common bottleneck at router",
-        "nocommon": "Not common bottleneck",
-        "wifi": "Common bottleneck at wifi AP",
+        "nocommon": "No common bottleneck",
+        "wifi": "Common bottleneck at WiFi AP",
     }
 
     # testcase = "router"
@@ -761,19 +749,6 @@ if __name__ == "__main__":
                 y_values = [y - min_y for y in y_values]
                 data.set_y_values(test, addr, y_values)
 
-        # remove outliers using z-score
-        # for test in data.tests():
-        #     for addr in addresses.keys():
-        #         y_values: List[float] = data.y_values(test, addr)  # type: ignore
-        #         z_scores = stats.zscore(y_values)
-        #         abs_z_scores = np.abs(z_scores)
-        #         filtered_entries = abs_z_scores < 3
-        #         data.set_y_values(
-        #             test,
-        #             addr,
-        #             [y for i, y in enumerate(y_values) if filtered_entries[i]],
-        #         )
-
         return data
 
     make_graph(
@@ -792,4 +767,5 @@ if __name__ == "__main__":
         maper=maper,
         performer=performer,
         finalcdf=args.finalcdf,
+        legend_loc=legend_loc,
     )
