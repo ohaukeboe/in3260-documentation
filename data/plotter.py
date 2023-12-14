@@ -269,6 +269,7 @@ def _plot_data(
     """Plot the data."""
     import matplotlib.pyplot as plt
     import scienceplots  # type: ignore
+    import random
     import math
 
     plt.style.use(["science", "grid", "ieee"])
