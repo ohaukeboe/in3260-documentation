@@ -1,4 +1,4 @@
-% Created 2023-12-14 Thu 13:24
+% Created 2023-12-14 Thu 13:56
 % Intended LaTeX compiler: pdflatex
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
@@ -66,26 +66,26 @@
 \maketitle
 
 \section{Introduction}
-\label{sec:org7b8086a}
+\label{sec:org4817918}
 Network performance issues are a widespread nuisance that can often leave users perplexed about their origin—be it within their local WiFi or due to external factors such as distant servers. Identifying these bottlenecks is critical in maintaining a proficient network experience.
 
 One project that attempts to solve this challenge is NETHINT \cslcitation{1}{[1]}, which leverages passive WiFi traffic analysis to evaluate latency and packet loss, providing insights into whether the congestion lies in the local network or not.
 
 This assignment builds upon the work of NETHINT by empirically testing its capability to discern the location of bottlenecks within a controlled environment. Utilization of a TEACUP \cslcitation{2}{[2]} testbed facilitates a systematic approach to simulating various network scenarios with different points of congestion. Through automated experiments on real machines, this assignment aims to critically evaluate NETHINT's proficiency in accurately identifying whether local WiFi is the limiting factor. The TEACUP configuration used is available at \cslcitation{3}{[3]}.
 \section{Testbed configuration}
-\label{sec:orge1e14ce}
+\label{sec:orgd34bfb5}
 The primary distinctive feature of NETHINT is its utilization of passive network measurements, ensuring no interference with the network \cslcitation{4}{[4]}. It achieves this by monitoring WiFi traffic and analyzing packet timings for each device on the network. This allows for a comparative assessment of the packet delay across different devices, which then can be used to determine whether the devices on the network have a common bottleneck or not. Should a common bottleneck be identified, it likely indicates that congestion exists within the local area network (LAN).
 
-To assess NETHINT's ability to recognize local WiFi bottlenecks, we configure a network topology as shown in Figure \ref{fig:org0a2477c}. All nodes in this topology are physical computers running Debian Linux, aside from the switch. They are managed by another computer not depicted in the figure, using TEACUP. This setup enables automated generation of network traffic, as well as throughput and delay limitations at the routers. Additionally, it enables automatic logging of network traffic.
+To assess NETHINT's ability to recognize local WiFi bottlenecks, we configure a network topology as shown in Figure \ref{fig:org49eaea1}. All nodes in this topology are physical computers running Debian Linux, aside from the switch. They are managed by another computer not depicted in the figure, using TEACUP. This setup enables automated generation of network traffic, as well as throughput and delay limitations at the routers. Additionally, it enables automatic logging of network traffic.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=.9\linewidth]{figures/topology-wireless.drawio-1.pdf}
-\caption{\label{fig:org0a2477c}Topology of the testbed}
+\caption{\label{fig:org49eaea1}Topology of the testbed}
 \end{figure}
 \subsection{Network Devices and Configuration}
-\label{sec:org8124192}
-Figure \ref{fig:org0a2477c} shows how all the devices are connected, and how the traffic flows between them. The logical topology shows how the traffic between Server~1 and Client~1 passes both routers, while the traffic between Server~2 and Client~2 only passes one router. This allows us to position the bottleneck at either Router 1 or Router 2, which gives either a shared bottleneck or no shared bottleneck between the two logical topologies. The roles of the individual nodes are the following:
+\label{sec:org08fc4bb}
+Figure \ref{fig:org49eaea1} shows how all the devices are connected, and how the traffic flows between them. The logical topology shows how the traffic between Server~1 and Client~1 passes both routers, while the traffic between Server~2 and Client~2 only passes one router. This allows us to position the bottleneck at either Router 1 or Router 2, which gives either a shared bottleneck or no shared bottleneck between the two logical topologies. The roles of the individual nodes are the following:
 
 \begin{itemize}
 \item \emph{Servers:} Two servers (Server~1 and Server~2) for generating traffic.
@@ -98,7 +98,7 @@ Figure \ref{fig:org0a2477c} shows how all the devices are connected, and how the
 
 This setup models a scenario where Client~2 consumes VoIP traffic from Server~2, while Client~1 consumes bandwidth for different activities from Server~1. The objective is to determine whether NETHINT is able to discern whether  traffic between Server~1 and Client~1 interferes with the traffic between Server~2 and Client~2.
 \subsubsection{Address configuration}
-\label{sec:orgaf61358}
+\label{sec:org155cb86}
 We use a switch to connect the two clients to the first router, allowing both clients to access Router 1 through the same network interface for wired connections. This setup facilitates bandwidth limitation at the router, enabling both clients to share the available bandwidth.
 
 The WiFi AP is also connected to the switch and provides an unencrypted WiFi network. The lack of encryption is due to NETHINT's inability to decrypt WiFi traffic. Both clients connect to this network, thus gaining access to the two servers over WiFi. Router 1's WiFi card, configured in monitor mode, is used by NETHINT to capture all the WiFi traffic between the clients and the WiFi AP. To enable traffic monitoring, the WiFi interface on Router 1 and the WiFi AP are both set to channel 3.
@@ -123,14 +123,14 @@ sudo ip route del 172.16.11.0/24 via 172.16.13.1 meric 2
 
 Here, \texttt{172.16.13.1} is the IP of the WiFi AP. These commands alternate the traffic route between the wired and wireless interfaces on the clients, allowing us to easily switch between running the tests over WiFi or over Ethernet.
 \subsection{Bottleneck configuration}
-\label{sec:orge01e9b6}
+\label{sec:org704aeca}
 The bottlenecks are placed at either Router 1, Router 2, or at the WiFi AP. This corresponds to the two users at Client~1 and Client~2 either having a common bottleneck or not. When the bottleneck occurs at Router 2, the user at Client~2 is not expected be significantly affected, as Router 1 should still have a surplus of bandwidth.
 \subsubsection{Configuration of throughput limitations}
-\label{sec:orga7de8b4}
-In order to configure the bottlenecks, we change the capacity at Router 1 and Router 2. The throughput at the WiFi AP is set to the lowest value it supports, which is 54 Mbps. Depending on the desired bottleneck location, the capacity at Router 1 and Router 2 was adjusted either above or below this threshold. Table \ref{tab:org2e19382} lists capacity values used in each bottleneck scenario.
+\label{sec:org7072774}
+In order to configure the bottlenecks, we change the capacity at Router 1 and Router 2. The throughput at the WiFi AP is set to the lowest value it supports, which is 54 Mbps. Depending on the desired bottleneck location, the capacity at Router 1 and Router 2 was adjusted either above or below this threshold. Table \ref{tab:orgc1671c7} lists capacity values used in each bottleneck scenario.
 
 \begin{table}[htbp]
-\caption{\label{tab:org2e19382}Configured capacity at the two routers in the different bottleneck configurations}
+\caption{\label{tab:orgc1671c7}Configured capacity at the two routers in the different bottleneck configurations}
 \centering
 \begin{tabular}{lrr}
 Bottleneck at: & Router 1 (Mbps) & Router 2 (Mbps)\\[0pt]
@@ -141,7 +141,7 @@ WiFi AP & 70 & 70\\[0pt]
 \end{tabular}
 \end{table}
 \subsubsection{Additional variable adjustments}
-\label{sec:orga4eda6f}
+\label{sec:orgb479181}
 In addition to throughput, both queue length and delay were varied on Router 1. The queue lengths were:
 \begin{itemize}
 \item 0.5 BDP
@@ -150,10 +150,10 @@ In addition to throughput, both queue length and delay were varied on Router 1. 
 \item 2 BDP
 \end{itemize}
 
-Delays of 50ms and 10ms were tested at Router 1, with Router 2 consistently set at a 10ms delay. The actual buffer sizes used for the tests are listed in Table \ref{tab:orge85e027}. These values were calculated using 15Mbps as the lowest capacity. However, an oversight led us to not update these values for when the WiFi AP was the bottleneck where the lowest throughput was 45Mbps. This caused the BDP values used for this traffic to be around \(\frac{1}{3}\) of what it was supposed to be.
+Delays of 50ms and 10ms were tested at Router 1, with Router 2 consistently set at a 10ms delay. The actual buffer sizes used for the tests are listed in Table \ref{tab:orge6fb93f}. These values were calculated using 15Mbps as the lowest capacity. However, an oversight led us to not update these values for when the WiFi AP was the bottleneck where the lowest throughput was 45Mbps. This caused the BDP values used for this traffic to be around \(\frac{1}{3}\) of what it was supposed to be.
 
 \begin{table}[htbp]
-\caption{\label{tab:orge85e027}Buffer sizes used on Router 1 (in number of packets) for the different delay and bdp configurations}
+\caption{\label{tab:orge6fb93f}Buffer sizes used on Router 1 (in number of packets) for the different delay and bdp configurations}
 \centering
 \begin{tabular}{lrr}
  & 10ms delay & 50ms delay\\[0pt]
@@ -165,7 +165,7 @@ Delays of 50ms and 10ms were tested at Router 1, with Router 2 consistently set 
 \end{tabular}
 \end{table}
 \subsubsection{TEACUP configuration}
-\label{sec:org87d676d}
+\label{sec:org5af22e7}
 In order to set these limitations, we used the built-in functions of TEACUP which allows us to set these limitations for one of the routers, and then it runs the tests for each of the values specified. This is done by setting the following variables in the TEACUP configuration:
 
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true,showstringspaces=false,postbreak=\mbox{$\hookrightarrow$\space},tabsize=2,language=Python,numbers=none]
@@ -199,7 +199,7 @@ TPCONF_router_queues = [
 
 TEACUP does not support setting different configurations for multiple routers. This meant that we had to limit the bandwidth for Router 2 differently.
 \subsubsection{Configuring Router 2 with \texttt{tc}}
-\label{sec:orgd79214d}
+\label{sec:orgfab40e2}
 To configure the delay for Router 2, we utilized the \texttt{tc} program to define qdisc rules. TEACUP provides a variable \texttt{TPCONF\_host\_init\_custom\_cmds} that executes specified commands on a designated machine. We used the following configuration to automatically enforce the desired constraints on Router 2.
 
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true,showstringspaces=false,postbreak=\mbox{$\hookrightarrow$\space},tabsize=2,language=Python,numbers=none]
@@ -212,9 +212,9 @@ TPCONF_host_init_custom_cmds = {
 }
 \end{lstlisting}
 
-The \texttt{tc\_rate} values were aligned with those specified in \ref{tab:org2e19382}, and \texttt{tc\_delay} was consistently set to \texttt{10ms}, in accordance with the delay used for all tests. The \texttt{tc\_bsize} was configured to equal 1 BDP.
+The \texttt{tc\_rate} values were aligned with those specified in \ref{tab:orgc1671c7}, and \texttt{tc\_delay} was consistently set to \texttt{10ms}, in accordance with the delay used for all tests. The \texttt{tc\_bsize} was configured to equal 1 BDP.
 \subsection{Traffic generation and types}
-\label{sec:org3fb67b2}
+\label{sec:org9744293}
 For all tests, we use one VoIP traffic between Client~2 and Server~2, while we use a few different types of traffic between Server~1 and Client~1. For NETHINT to be able to collect information about the packet streams, the traffic must use TCP. We vary the type of TCP flows by changing the congestion control (CC) algorithm, and the type of traffic. The following are the traffic configurations used between Server~1 and Client~1:
 \begin{itemize}
 \item Three flows using CC algorithm Reno
@@ -253,7 +253,7 @@ traffic_iperf = [
 
 By default, iperf transmits data from the client to the server, but the \texttt{-R} flag reverses this direction. We utilize the \texttt{-R} flag instead of swapping server and client roles due to the home router functioning as the WiFi AP having NAT enabled. This makes it essential to ensure that the clients are the ones to initiate the connection as the server machines cannot reach the client IP addresses.
 \subsection{Collecting data}
-\label{sec:org2d8754e}
+\label{sec:org172bdbf}
 When running tests with TEACUP, it automatically collects pcap files using tcpdump, on the network interfaces that have an IP address. In addition, we set up NETHINT on Router 1 to listen to the WiFi traffic using the wireless network interface. As NETHINT writes the collected data to a file, we had to make a custom function in the TEACUP program to set this up as a logger.
 
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true,showstringspaces=false,postbreak=\mbox{$\hookrightarrow$\space},tabsize=2,language=Python,numbers=none]
@@ -292,10 +292,10 @@ NETHINT operates as a logger on Router 1. Since NETHINT is monitoring a wireless
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=.9\linewidth]{figures/nethint.png}
-\caption{\label{fig:orge807c03}Screenshot of NETHINT}
+\caption{\label{fig:org3d9f0ff}Screenshot of NETHINT}
 \end{figure}
 
-When running NETHINT, it is possible to make it render a GUI which shows the data as in Figure \ref{fig:orge807c03}. But for our analysis, it is easier to have all this data collected in a file instead. NETHINT supports logging all data into a JSON file by running it with the flag \texttt{-l}, which we then can use for our analysis of the data.
+When running NETHINT, it is possible to make it render a GUI which shows the data as in Figure \ref{fig:org3d9f0ff}. But for our analysis, it is easier to have all this data collected in a file instead. NETHINT supports logging all data into a JSON file by running it with the flag \texttt{-l}, which we then can use for our analysis of the data.
 
 Unfortunately, we later found that this yielded very few packets to be collected by NETHINT. It would therefore likely yield better results to capture a pcap file for the traffic on Router 1s WiFi card, and then analyze this data with NETHINT later. This could be done either by using tcpdump, or by running NETHINT with the \texttt{-w} flag which enable writing to a pcap file. As we did not get the opportunity to run these tests again with this change, we use the pcap files generated by TEACUP on the network interfaces of both Client~1 and Client~2. This should produce similar data except that we cannot guarantee that the real time clocks of the two clients are perfectly synchronized.
 
@@ -317,7 +317,7 @@ It was also found that out of all 192 test runs, 13 of them seem to have failed 
 \item 2 BDP and three Reno with no common bottleneck
 \end{itemize}
 \section{Changes made to NETHINT}
-\label{sec:orgb404004}
+\label{sec:orgd8b07f0}
 In order to calculate the correlation between the network streams, we needed to make a few small changes to the NETHINT program. We also found a miscalculation which had to be fixed. These changes were:
 
 \begin{itemize}
@@ -342,8 +342,8 @@ Additionally, there was a mistake in the calculation of the OWD. The OWD is calc
 
 The value given in tsval is not usually the actual time, but rather a value given by a ``timestamp clock'', nevertheless it should be approximately proportional to real time \cslcitation{8}{[8]}. This means that the calculated OWD is not really the actual time it takes for the packets to travel one way, but that it still is a number that can be used to say something about how the OWD changes. This is fine for our purpose as we are considering how the OWD changes with time, and not the actual values. We still need to have the actual OWD values for our calculations. NETHINT originally only logged how the OWD changed (Current OWD - Previous OWD), however, we need the actual raw OWD values. This meant that we also had to enable logging of the raw OWD values.
 \section{Results}
-\label{sec:orga97916c}
-In order to compare how the OWD changes between the different bottleneck location configurations, we first calculate the correlation coefficient between the two traffic paths (Server~1 to Client~1 and Server~2 to Client~2). For this we collect the data from the JSON objects by comparing the destination address. This means that we don't differentiate between the different TCP streams between Server~1 and Client~1, but that we look at all data going towards Client~1 as a whole. This gives us two datasets, one for traffic towards Client~1 and one of traffic towards Client~2, allowing us to compare how the OWD changes over time between the two logical topologies in Figure \ref{fig:org0a2477c}.
+\label{sec:org1cf5f71}
+In order to compare how the OWD changes between the different bottleneck location configurations, we first calculate the correlation coefficient between the two traffic paths (Server~1 to Client~1 and Server~2 to Client~2). For this we collect the data from the JSON objects by comparing the destination address. This means that we don't differentiate between the different TCP streams between Server~1 and Client~1, but that we look at all data going towards Client~1 as a whole. This gives us two datasets, one for traffic towards Client~1 and one of traffic towards Client~2, allowing us to compare how the OWD changes over time between the two logical topologies in Figure \ref{fig:org49eaea1}.
 
 When calculating the correlation coefficient between these two datasets, we get a number representing how much they move together. That is, when one dataset increases, how much does the other increase. In order to calculate this, it is necessary that both datasets are of equal length and have corresponding x values. This is almost guaranteed not to be the case. To solve this, we interpolate the smaller dataset using numpy, by setting:
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true,showstringspaces=false,postbreak=\mbox{$\hookrightarrow$\space},tabsize=2,language=Python,numbers=none]
@@ -365,29 +365,29 @@ y = np.arange(1, len(x) + 1) / len(x)
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/results/all-over2-no-only-video.pdf}
-\caption{\label{fig:org83ea383}CDF graph for all tests}
+\caption{\label{fig:orgb49b298}CDF graph for all tests}
 \end{figure}
 
-Figure \ref{fig:org83ea383} shows the CDF for the correlation coefficient for all the tests. It shows that there is a clear difference in how the OWD changes over time between when the two traffic routes have a common bottleneck and when they do not. It can also be seen that if the correlation coefficient is greater than 0.7, it is very likely that there is a common bottleneck. However, there are still some tests where also the configuration with no common bottleneck have a very high correlation coefficient, showing that this value being high does not guarantee that there is a common bottleneck.
+Figure \ref{fig:orgb49b298} shows the CDF for the correlation coefficient for all the tests. It shows that there is a clear difference in how the OWD changes over time between when the two traffic routes have a common bottleneck and when they do not. It can also be seen that if the correlation coefficient is greater than 0.7, it is very likely that there is a common bottleneck. However, there are still some tests where also the configuration with no common bottleneck have a very high correlation coefficient, showing that this value being high does not guarantee that there is a common bottleneck.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/results/all-over2-no-video.pdf}
-\caption{\label{fig:orged3ef23}CDF graph for all tests without VoIP traffic}
+\caption{\label{fig:orga3088e6}CDF graph for all tests without VoIP traffic}
 \end{figure}
 
-An interesting aspect is that all tests where the correlation coefficient for no common bottleneck in Figure \ref{fig:org83ea383} was above 0.7, also had VoIP traffic between Server~1 and Client~1. When excluding all tests that also had VoIP traffic between these, the highest correlation coefficient for the ``no common bottleneck'' case was 0.62. The entire CDF plot for this is shown in Figure \ref{fig:orged3ef23} where we can see a clear gap between the highest correlation values for when there is no common bottleneck and when there is.
+An interesting aspect is that all tests where the correlation coefficient for no common bottleneck in Figure \ref{fig:orgb49b298} was above 0.7, also had VoIP traffic between Server~1 and Client~1. When excluding all tests that also had VoIP traffic between these, the highest correlation coefficient for the ``no common bottleneck'' case was 0.62. The entire CDF plot for this is shown in Figure \ref{fig:orga3088e6} where we can see a clear gap between the highest correlation values for when there is no common bottleneck and when there is.
 \subsection{Only VoIP traffic}
-\label{sec:org8424599}
+\label{sec:org8a6a70d}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/results/only-video-combined.pdf}
-\caption{\label{fig:orgbdcff89}CDF graph for traffic only containing of VoIP traffic}
+\caption{\label{fig:org01c4a4b}CDF graph for traffic only containing of VoIP traffic}
 \end{figure}
 
-A possible explanation for why having VoIP traffic between Server~1 and Client~1 causes such high correlation could be that having identical traffic patterns directed towards both clients at simultaneously can make it seem more correlated than it should be, despite the presence of other concurrent traffic. We also ran some tests, which are not part of the tests used in Figure \ref{fig:org83ea383}, with just VoIP traffic between Server~1 and Client~1, meaning that the traffic going to the two Clients should be now identical. When only running VoIP traffic like this, we did not generate enough traffic to reach any of the configured throughput bottlenecks, meaning that essentially all tests like this were without any common bottleneck. For this reason, we have combined all the tests into just one CDF plot shown in Figure \ref{fig:orgbdcff89}, which shows that this traffic tends to seem either very correlated or not very correlated at all, which confirms that the type of traffic being similar can be enough to get very high correlation values.
+A possible explanation for why having VoIP traffic between Server~1 and Client~1 causes such high correlation could be that having identical traffic patterns directed towards both clients at simultaneously can make it seem more correlated than it should be, despite the presence of other concurrent traffic. We also ran some tests, which are not part of the tests used in Figure \ref{fig:orgb49b298}, with just VoIP traffic between Server~1 and Client~1, meaning that the traffic going to the two Clients should be now identical. When only running VoIP traffic like this, we did not generate enough traffic to reach any of the configured throughput bottlenecks, meaning that essentially all tests like this were without any common bottleneck. For this reason, we have combined all the tests into just one CDF plot shown in Figure \ref{fig:org01c4a4b}, which shows that this traffic tends to seem either very correlated or not very correlated at all, which confirms that the type of traffic being similar can be enough to get very high correlation values.
 \subsection{Correlation of CDF}
-\label{sec:org9c05b58}
+\label{sec:org12f8881}
 \begin{figure}
   \centering
   \begin{subfigure}{0.49\textwidth}
@@ -402,16 +402,16 @@ A possible explanation for why having VoIP traffic between Server~1 and Client~1
     \caption{\label{subfig:double-cdf-novideo}No tests with VoIP}
   \end{subfigure}%
   %% \caption{\label{fig:double-cdf}CDF data for correlation of CDF}
-\caption{\label{orgbc64aac}CDF of correlation coefficients of CDF}
+\caption{\label{org1989f21}CDF of correlation coefficients of CDF}
 \end{figure}
 
 Another way to compare the traffic is to first calculate the CDF for the raw OWDs for traffic directed towards the two Clients. This allows for comparing the distribution of OWD values instead of how the OWD values changes over time. Since the OWD values are not actual real clock time, they will vary significantly in actual values. It is therefore necessary to align the OWD values. We have done this by shifting all OWD values such that the lowest OWD value for each client becomes 0. This means that all other OWD value essentially represent how much longer the OWD is compared to the lowest OWD, and that the calculated correlation represent how similar this distribution is between the two clients. In a practical system, this would be similar to determining the correlation after carrying out long-term measurements covering various traffic patterns.
 
-As can be seen in Figure \ref{orgbc64aac} this did not significantly affect the CDF for no common bottleneck, except for decreasing the highest CDF values slightly compared to in Figure \ref{fig:org83ea383}. However, the values for both configurations with a common bottleneck now appear significantly more correlated. With this calculation, the highest correlation coefficient for no common bottleneck is less than 0.95, while this same value only accounts for about 20\% of the tests with a common bottleneck.
+As can be seen in Figure \ref{org1989f21} this did not significantly affect the CDF for no common bottleneck, except for decreasing the highest CDF values slightly compared to in Figure \ref{fig:orgb49b298}. However, the values for both configurations with a common bottleneck now appear significantly more correlated. With this calculation, the highest correlation coefficient for no common bottleneck is less than 0.95, while this same value only accounts for about 20\% of the tests with a common bottleneck.
 
 When doing the calculation in this way, the difference between including the tests with VoIP traffic, and not including it, was not very significant. This can be seen as the two graphs \ref{subfig:double-cdf-all} and \ref{subfig:double-cdf-novideo} are very similar.
 \subsection{Comparison between BDP}
-\label{sec:org576cb18}
+\label{sec:org7495084}
 \begin{figure}
   \centering
   \begin{subfigure}{0.49\textwidth}
@@ -438,21 +438,21 @@ When doing the calculation in this way, the difference between including the tes
     \caption{\label{subfig:bdp-20}2 BDP}
   \end{subfigure}%
   %% \caption{\label{fig:cdf-bdp}CDF plots for each BDP configuration}
-\caption{\label{orgf871d32}CDF plots for each BDP configuration}
+\caption{\label{org094f530}CDF plots for each BDP configuration}
 \end{figure}
 
-Figure \ref{orgf871d32} shows the CDF for each of the BDP configurations separately, rather than the complete data over all configurations that was used for the previous diagrams. This also reflects a more realistic case, as one would typically apply a monitoring tool in one particular network configuration only.
+Figure \ref{org094f530} shows the CDF for each of the BDP configurations separately, rather than the complete data over all configurations that was used for the previous diagrams. This also reflects a more realistic case, as one would typically apply a monitoring tool in one particular network configuration only.
 
-These were calculated as in Section \ref{sec:orga97916c}, and does not include the tests which also had VoIP traffic from Server~1 to Client~1. It can be seen that the correlations for no common bottleneck tend to decrease as the BDP increases. It is also noticeable how the correlations for when there is a common bottleneck at the router tend to increase as the BDP increases. We don't see the same effect for when the bottleneck is at the WiFi AP, but this is likely due to all the BDP configurations here actually being much smaller as mentioned in Section \ref{sec:orga4eda6f}.
+These were calculated as in Section \ref{sec:org1cf5f71}, and does not include the tests which also had VoIP traffic from Server~1 to Client~1. It can be seen that the correlations for no common bottleneck tend to decrease as the BDP increases. It is also noticeable how the correlations for when there is a common bottleneck at the router tend to increase as the BDP increases. We don't see the same effect for when the bottleneck is at the WiFi AP, but this is likely due to all the BDP configurations here actually being much smaller as mentioned in Section \ref{sec:orgb479181}.
 \section{Conclusion and future work}
-\label{sec:orga4637f0}
+\label{sec:org863f864}
 In this assignment, we have demonstrated how NETHINT can be used for determining whether a network bottleneck is situated in the local WiFi or somewhere else by evaluating the OWD of the incoming packets. By calculating the correlation of the OWD of the incoming packets between two clients, we have seen a significant trend in there being a higher correlation when the bottleneck is located in a shared router, rather that when the bottleneck is situated somewhere only affecting the client using the most traffic.
 
 The results were very promising both when correlating how the OWD changes over time, as well as when comparing the distribution of OWD values. But they also showed how the calculated correlation can be high due to similarities in the traffic pattern. This effect of having similar traffic pattern is something that can be further studied in order to better understand its effect on the perceived correlation and how to circumvent it.
 
 In order to properly determine whether NETHINT is suitable for detecting network congestion in a home network, it would also be necessary to run tests with more than two clients as there are likely more devices on a home network.
 \section*{References}
-\label{sec:orgced5ff2}
+\label{sec:orgfb8db1d}
 \begin{cslbibliography}{0}{0}
 \cslbibitem{1}{\cslleftmargin{[1]}\cslrightinline{P. J. Barhaugen, “NETwork Home INTerference.” May 08, 2023. Accessed: Nov. 30, 2023. [Online]. Available: \url{https://github.com/petternett/NETHINT}}}
 
