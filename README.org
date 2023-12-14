@@ -1,0 +1,8 @@
+
+This repository contains the source the documentation I wrote for a project as part of the subject IN3260 at the University of Oslo. The documentation is written in org-mode and exported to PDF. For the sake of reproducibility, the exported LaTeX files are also included.
+
+- [[file:documentation/documentation.pdf][The pdf]]
+
+The directory [[file:data/]] contains the scripts used to generate the diagrams. It also has a directory [[file:data/figures/]] which contains multiple already generated graphs as well as text files containing information about the number of data points as well as the correlations.
+
+Wherever the word 'video' is used, it pertains to having VoIP traffic between Server\nbsp1 and Client\nbsp1
