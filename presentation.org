@@ -1,0 +1,226 @@
+#+title: Detection of shared network bottleneck using passive WiFi traffic analysis
+#+author: Oskar Haukebøe
+:options:
+#+startup: beamer noinlineimages
+#+options: toc:nil num:nil
+#+beamer_color_theme: seahorse
+#+columns: %45ITEM %10BEAMER_ENV(Env) %10BEAMER_ACT(Act) %4BEAMER_COL(Col)
+#+latex_header: \usepackage{tikz}
+#+latex_header: \usepackage{pgf}
+#+latex_header: \usetikzlibrary{positioning}
+#+latex_header_extra: \setbeamercolor{title}{bg=white}
+#+latex_header_extra: \setbeamercolor{frametitle}{bg=white}
+#+MACRO: imageblock @@beamer:\input{figures/presentation/topright.tex}@@
+:end:
+
+
+* NETHINT
+** About NETHINT                                                :B_block:BMCOL:
+:PROPERTIES:
+:BEAMER_COL: 0.48
+:END:
+#+attr_beamer: :overlay <+->
+- Part of earlier master thesis
+- Determine whether network congestion is located on local WiFi or not
+- Know whether you can blame your family for slow internet
+- Only uses passive measurements
+
+** Screenshot                                                   :B_frame:BMCOL:
+:PROPERTIES:
+:BEAMER_COL: 0.7
+:END:
+
+[[file:figures/nethint.png]]
+
+* TEACUP
+#+beamer: \pause
+
+[[file:figures/topology-wireless.drawio-1.pdf]]
+
+#+begin_comment
+- Mostly physical machines
+- Directions of the traffic
+- Types of traffic. Start with Server 2 \to Client 2
+- Bottleneck at Routers
+- What the different bottlenecks means for Client 2
+  - What bottleneck at Router 2 means in a real world scenario
+- The WiFi icons
+#+end_comment
+
+* Traffic generation                                            :B_frame:BMCOL:
+
+** Traffic types                                              :B_ignoreheading:
+:PROPERTIES:
+:BEAMER_env: ignoreheading
+:END:
+
+{{{imageblock}}}
+
+#+attr_beamer: :overlay <+->
+- Server\nbsp2 \to Client\nbsp2: Always the same VoIP traffic
+- Server\nbsp1 \to Client\nbsp1:
+  - Three Reno flows
+  - Three Cubic flows
+  - Three BBR flows
+  - One of each
+  - The above, but also with VoIP
+
+* Router settings
+
+{{{imageblock}}}
+
+** Buffer lengths at Router 1                                   :B_block:BMCOL:
+:PROPERTIES:
+:BEAMER_col: .5
+:BEAMER_env: block
+:END:
+
+- 0.5 BDP
+- 1 BDP
+- 1.5 BDP
+- 2 BDP
+
+** Delay                                                        :B_block:BMCOL:
+:PROPERTIES:
+:BEAMER_col: .5
+:BEAMER_env: block
+:END:
+
+- 10ms
+- 50ms
+
+* Some fun numbers
+{{{imageblock}}}
+
+#+attr_beamer: :overlay <+->
+- 64 different BDP + delay + capacity configurations
+- 192 total tests
+- 16 Hours of test time
+- >20 hours of TEACUP run time
+- \sim85 000 000 datapoints in total
+
+* The correlation                                                 :B_fullframe:
+[[file:figures/topology-wireless.drawio-1.pdf]]
+
+See if the OWD of packets traveling towards Client 1 and Client 2 are correlated
+
+* The correlation
+** Nocommon                                                             :BMCOL:
+:PROPERTIES:
+:BEAMER_col: .56
+:END:
+
+#+name: nocommon
+#+caption: No common bottleneck
+[[file:figures/presentation/owd-time-nocommon.png]]
+
+#+attr_beamer: :overlay <3->
+- Correlation: 0.20
+
+** Common                                                               :BMCOL:
+:PROPERTIES:
+:BEAMER_col: .56
+:END:
+
+#+beamer: \pause
+#+name: common
+#+caption: Common bottleneck
+[[file:figures/presentation/owd-time-common.png]]
+
+#+attr_beamer: :overlay <3->
+- Correlation: 0.93
+
+* CDF graph
+[[file:figures/results/all-over2-no-only-video.pdf]]
+
+* Traffic types                                               :B_ignoreheading:
+{{{imageblock}}}
+
+#+begin_comment
+- Use TCP as we need the optional timestamp field
+#+end_comment
+
+- Server\nbsp2 \to Client\nbsp2: Always the same VoIP traffic
+- Server\nbsp1 \to Client\nbsp1:
+  - Three Reno flows
+  - Three Cubic flows
+  - Three BBR flows
+  - One of each
+  - The above, but also with VoIP
+
+* Without VoIP
+[[file:figures/results/all-over2-no-video.pdf]]
+
+* Correlation of CDF                                                  :B_frame:
+:PROPERTIES:
+:BEAMER_opt: allowframebreaks,label=
+:END:
+
+** OWD vs time                                                :B_ignoreheading:
+:PROPERTIES:
+:BEAMER_env: ignoreheading
+:END:
+
+#+begin_comment
+- numpy for interpolation
+- scipy for correlation coefficient
+- Used correlations from all 192 tests to make CDF
+#+end_comment
+
+*** Nocommon                                                            :BMCOL:
+:PROPERTIES:
+:BEAMER_col: .56
+:END:
+
+#+name: nocommon
+#+caption: No common bottleneck
+[[file:figures/presentation/owd-time-nocommon.png]]
+
+- Correlation: 0.20
+
+*** Common                                                              :BMCOL:
+:PROPERTIES:
+:BEAMER_col: .56
+:END:
+
+#+name: common
+#+caption: Common bottleneck
+[[file:figures/presentation/owd-time-common.png]]
+
+- Correlation: 0.93
+
+** CDF of OWD                                                 :B_ignoreheading:
+:PROPERTIES:
+:BEAMER_env: ignoreheading
+:END:
+#+beamer: \framebreak
+
+*** Nocommon                                                            :BMCOL:
+:PROPERTIES:
+:BEAMER_col: .56
+:END:
+
+#+name: nocommon
+#+caption: No common bottleneck
+[[file:figures/presentation/correlation-owd-nocommon.png]]
+
+- Correlation: 0.4
+
+*** Common                                                              :BMCOL:
+:PROPERTIES:
+:BEAMER_col: .56
+:END:
+
+#+name: common
+#+caption: Common bottleneck
+[[file:figures/presentation/correlation-owd-common.png]]
+
+- Correlation: 0.9967
+
+
+** Final CDF                                                  :B_ignoreheading:
+:PROPERTIES:
+:BEAMER_env: ignoreheading
+:END:
+
+[[file:figures/double-cdf/double-cdf-all-over2-no-video.pdf]]
