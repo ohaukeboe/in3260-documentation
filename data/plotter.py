@@ -201,6 +201,8 @@ def _get_files(directory: str, tests: Dict[str, str]) -> Dict[str, str]:
     files: Dict[str, str] = {}
     subdir: str = directory.split("/")[-1]
     for test in tests.keys():
+        if not os.path.exists(f"{directory}/{subdir}_{test}/"):
+            continue
         for file in os.listdir(f"{directory}/{subdir}_{test}/"):
             if file.endswith(".log"):
                 files[test] = f"{directory}/{subdir}_{test}/{file}"
@@ -266,15 +268,24 @@ def _plot_data(
 ) -> None:
     """Plot the data."""
     import matplotlib.pyplot as plt
+    import scienceplots  # type: ignore
+    import math
 
-    fig, ax = plt.subplots(nrows=len(data.tests()), ncols=1)
-    fig.subplots_adjust(hspace=1)
+    plt.style.use(["science", "grid", "ieee"])
+    # plt.rcParams.update({"legend.fontsize": "small", "axes.labelsize": "large"})
+    plt.rcParams.update({"axes.labelsize": "x-large", "legend.framealpha": "0.85"})
 
-    if title is not None:
-        fig.suptitle(title)
+    filenames: List[str] | None = None
+    if filename is not None:
+        filenames = []
+        for test in data.tests():
+            filenames.append(
+                f"{filename.split(".")[0]}-{test}.{filename.split('.')[-1]}")
 
     for i, test in enumerate(sorted(data.tests())):
-        ax = plt.subplot(len(data.tests()), 1, i + 1)
+        # ax = plt.subplot(len(data.tests()), 1, i + 1)
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        ax.grid()
 
         def _plot_data_points(ax: Any, test: str):
             for addr in addrs.addrs():
@@ -320,19 +331,16 @@ def _plot_data(
                 _plot_data_points(ax, test)
                 ax.legend()
 
-        ax.set_title(f"{tests[test]} - {field.upper()}")
-
         if x_label is not None:
             ax.set_xlabel(x_label)
         if y_label is not None:
             ax.set_ylabel(y_label)
 
-        ax.grid()
-
-    if filename is not None:
-        plt.savefig(filename, dpi=700)
-    else:
-        plt.show()
+        if filenames is not None:
+            plt.savefig(filenames[i], dpi=700)
+            plt.close()
+        else:
+            plt.show()
 
 
 def _plot_correlation(
@@ -349,7 +357,7 @@ def _plot_correlation(
 
     plt.style.use(["science", "grid", "ieee"])
     # plt.rcParams.update({"legend.fontsize": "small", "axes.labelsize": "large"})
-    plt.rcParams.update({"axes.labelsize": "x-large"})
+    plt.rcParams.update({"axes.labelsize": "x-large", "legend.framealpha": "0.85"})
 
     fig, ax = plt.subplots(nrows=1, ncols=1)
     fig.subplots_adjust(hspace=1)
@@ -361,6 +369,8 @@ def _plot_correlation(
 
         y_values: List[float] = []
         for directory in data.datasets():
+            if testcase not in data[directory].correlation:
+                continue
             if not math.isnan(data[directory].correlation[testcase]):
                 y_values.append(data[directory].correlation[testcase])
 
@@ -696,9 +706,9 @@ if __name__ == "__main__":
         legend_loc = args.legend
 
     tests = {
-        "common": "Common bottleneck at router",
+        "common": "Common bottleneck\nat router",
         "nocommon": "No common bottleneck",
-        "wifi": "Common bottleneck at WiFi AP",
+        "wifi": "Common bottleneck\nat WiFi AP",
     }
 
     # testcase = "router"
