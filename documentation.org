@@ -18,8 +18,6 @@
 #+latex_header: \usepackage[margin=1.3in]{geometry}
 :end:
 
-# TODO: graph comment by Michael
-
 * Introduction
 Network performance issues are a widespread nuisance that can often leave users perplexed about their origin—be it within their local WiFi or due to external factors such as distant servers. Identifying these bottlenecks is critical in maintaining a proficient network experience.
 
@@ -274,12 +272,6 @@ Additionally, there was a mistake in the calculation of the OWD. The OWD is calc
 #+end_src
 
 The value given in tsval is not usually the actual time, but rather a value given by a "timestamp clock", nevertheless it should be approximately proportional to real time [cite:@bormanTCPExtensionsHigh2014]. This means that the calculated OWD is not really the actual time it takes for the packets to travel one way, but that it still is a number that can be used to say something about how the OWD changes. This is fine for our purpose as we are considering how the OWD changes with time, and not the actual values. We still need to have the actual OWD values for our calculations. NETHINT originally only logged how the OWD changed (Current OWD - Previous OWD), however, we need the actual raw OWD values. This meant that we also had to enable logging of the raw OWD values.
-
-* COMMENT Other limitations experienced with NETHINT
-
-- Not able to capture all data
-- High RAM usage
-- Long processing time of the pcap files (longer that it took to collect them)
 
 * Results
 In order to compare how the OWD changes between the different bottleneck location configurations, we first calculate the correlation coefficient between the two traffic paths (Server\nbsp1 to Client\nbsp1 and Server\nbsp2 to Client\nbsp2). For this we collect the data from the JSON objects by comparing the destination address. This means that we don't differentiate between the different TCP streams between Server\nbsp1 and Client\nbsp1, but that we look at all data going towards Client\nbsp1 as a whole. This gives us two datasets, one for traffic towards Client\nbsp1 and one of traffic towards Client\nbsp2, allowing us to compare how the OWD changes over time between the two logical topologies in Figure [[fig-topology]].
