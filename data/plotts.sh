@@ -18,30 +18,30 @@ plot_corr() {
 
 # All
 
-outfile='figures/all-over2-no-only-video.pdf'
-files=$(ls -d $datadir/* | grep -v 'video$')
-plot
+# outfile='figures/all-over2-no-only-video.pdf'
+# files=$(ls -d $datadir/* | grep -v 'video$')
+# plot
 
-outfile='figures/all-over2-no-video.pdf'
-files=$(ls -d $datadir/* | grep -v 'video')
-plot
+# outfile='figures/all-over2-no-video.pdf'
+# files=$(ls -d $datadir/* | grep -v 'video')
+# plot
 
 
-outfile='figures/double-cdf-all-over2-no-only-video.pdf'
-files=$(ls -d $datadir/* | grep -v 'video$')
-plot_corr
+# outfile='figures/double-cdf-all-over2-no-only-video.pdf'
+# files=$(ls -d $datadir/* | grep -v 'video$')
+# plot_corr
 
-outfile='figures/double-cdf-all-over2-no-video.pdf'
-files=$(ls -d $datadir/* | grep -v 'video')
-plot_corr
+# outfile='figures/double-cdf-all-over2-no-video.pdf'
+# files=$(ls -d $datadir/* | grep -v 'video')
+# plot_corr
 
-# Only video
+# # Only video
 
-video_dir='video-data'
-outfile='figures/only-video.pdf'
-files=$(ls -d $video_dir/*)
-legend='lower right'
-plot_legend
+# video_dir='video-data'
+# outfile='figures/only-video.pdf'
+# files=$(ls -d $video_dir/*)
+# legend='lower right'
+# plot_legend
 
 
 # ------------------------------------
@@ -87,24 +87,28 @@ plot_legend
 # for each BDP combination
 
 
-outfile='figures/bdp-05-no-only-video.pdf'
+outfile='figures/bdp-05-no-video.pdf'
 files=$(ls -d $datadir/* | grep -E 'bs_6_|bs_31_' | grep -v video)
-plot
+legend='lower right'
+plot_legend
 
-outfile='figures/bdp-10-no-only-video.pdf'
+outfile='figures/bdp-10-no-video.pdf'
 # finder=' ( -name "*bs_12*" -or -name "*bs_62*" ) -and ( -not -name "*video*" ) '
 files=$(ls -d $datadir/* | grep -E 'bs_12_|bs_62_' | grep -v video)
-plot
+legend='lower right'
+plot_legend
 
-outfile='figures/bdp-15-no-only-video.pdf'
+outfile='figures/bdp-15-no-video.pdf'
 # finder=' ( -name "*bs_18*" -or -name "*bs_93*" ) -and ( -not -name "*video*" ) '
 files=$(ls -d $datadir/* | grep -E 'bs_18_|bs_93_' | grep -v video)
-plot
+legend='lower right'
+plot_legend
 
-outfile='figures/bdp-20-no-only-video.pdf'
+outfile='figures/bdp-20-no-video.pdf'
 # finder=' ( -name "*bs_24*" -or -name "*bs_124*" ) -and ( -not -name "*video*" ) '
 files=$(ls -d $datadir/* | grep -E 'bs_24_|bs_124_' | grep -v video)
-plot
+legend='lower right'
+plot_legend
 
 
 
