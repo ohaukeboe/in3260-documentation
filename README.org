@@ -6,3 +6,33 @@ This repository contains the source the documentation I wrote for a project as p
 The directory [[file:data/]] contains the scripts used to generate the diagrams. It also has a directory [[file:data/figures/]] which contains multiple already generated graphs as well as text files containing information about the number of data points as well as the correlations.
 
 Wherever the word 'video' is used, it pertains to having VoIP traffic between Server\nbsp1 and Client\nbsp1
+
+
+* Reproducing the plots
+
+The script [[file:data/plotter.py][plotter.py]] is the script used to generate the graphs. To generate the CDF plots for the tests, run the following command:
+
+#+begin_src sh
+./plotter.py <tests> -Fvf owd -o <outfile.pdf>
+#+end_src
+
+Where =<tests>= is the directory for the traffic tests. The script expects the directory layout bellow, where you have directories for each type of traffic, which then includes directories for each traffic congestion type.
+
+#+begin_example
+  ├── bs_124_del25_1video
+  │   ├── bs_124_del25_1video_wifi
+  │   │   └── exp_20231122-231345_del_25_down_70mbit_up_70mbit_aqm_pfifo_tcp_newreno_bs_124_run_0_nethint.log
+  │   ├── bs_124_del25_1video_nocommon
+  │   │   └── exp_20231122-225014_del_25_down_70mbit_up_70mbit_aqm_pfifo_tcp_newreno_bs_124_run_0_nethint.log
+  │   └── bs_124_del25_1video_common
+  │       └── exp_20231122-222644_del_25_down_15mbit_up_15mbit_aqm_pfifo_tcp_newreno_bs_124_run_0_nethint.log
+  └── bs_124_del25_1bbr_1cubic_1reno
+      ├── bs_124_del25_1bbr_1cubic_1reno_wifi
+      │   └── exp_20231122-165135_del_25_down_70mbit_up_70mbit_aqm_pfifo_tcp_newreno_bs_124_run_0_nethint.log
+      ├── bs_124_del25_1bbr_1cubic_1reno_nocommon
+      │   └── exp_20231122-162629_del_25_down_70mbit_up_70mbit_aqm_pfifo_tcp_newreno_bs_124_run_0_nethint.log
+      └── bs_124_del25_1bbr_1cubic_1reno_common
+          └── exp_20231122-160123_del_25_down_15mbit_up_15mbit_aqm_pfifo_tcp_newreno_bs_124_run_0_nethint.log
+#+end_example
+
+In order to create this directory layout, the script [[file:data/grouper.sh][grouper.sh]] can be used. The script [[file:data/analyzer.sh][analyzer.sh]] can be used to analyze the raw dmp files using NETHINT.

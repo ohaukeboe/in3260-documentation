@@ -281,7 +281,7 @@ def _plot_data(
         filenames = []
         for test in data.tests():
             filenames.append(
-                f"{filename.split(".")[0]}-{test}.{filename.split('.')[-1]}")
+                f"{filename.split('.')[0]}-{test}.{filename.split('.')[-1]}")
 
     for i, test in enumerate(sorted(data.tests())):
         # ax = plt.subplot(len(data.tests()), 1, i + 1)
